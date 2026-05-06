@@ -1,0 +1,1918 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>ResumeIQ — Agentic Scorer | AI-Powered Resume Analysis</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+  <style>
+    /* ═══════════════════════════════════════════════
+       TOKENS & DESIGN SYSTEM
+    ═══════════════════════════════════════════════ */
+    :root {
+      --bg:      #05060a;
+      --bg2:     #0c0d14;
+      --bg3:     #111320;
+      --border:  #1a1d2e;
+      --border2: #252840;
+      --accent:  #6366f1;
+      --accent-hover: #4f46e5;
+      --accent2: #22d3ee;
+      --orange:  #f97316;
+      --green:   #22c55e;
+      --yellow:  #eab308;
+      --red:     #ef4444;
+      --pink:    #ec4899;
+      --text:    #e8eaf0;
+      --muted:   #555870;
+      --muted2:  #8890b0;
+      --card:    #0e1018;
+      --glass:   rgba(14, 16, 24, 0.8);
+      --mono:    'Space Mono', monospace;
+      --sans:    'Space Grotesk', sans-serif;
+      
+      /* Animation */
+      --ease-out-expo: cubic-bezier(0.19, 1, 0.22, 1);
+      --ease-out-back: cubic-bezier(0.34, 1.56, 0.64, 1);
+      --transition-fast: 150ms;
+      --transition-normal: 250ms;
+      --transition-slow: 400ms;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      overflow: hidden;
+      scroll-behavior: smooth;
+    }
+
+    /* ── Enhanced noise grain overlay ── */
+    body::after {
+      content: '';
+      position: fixed; inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none; z-index: 9999; opacity: .4;
+      mix-blend-mode: overlay;
+    }
+
+    /* ── Custom Scrollbar ── */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+
+    /* ═══════════════════════════════════════════════
+       APP SHELL — Fixed layout with no overlap
+    ═══════════════════════════════════════════════ */
+    .shell {
+      display: grid;
+      grid-template-columns: 340px 1fr 380px;
+      grid-template-rows: 56px 1fr;
+      height: 100vh;
+      width: 100vw;
+      gap: 0;
+      position: relative;
+    }
+
+    /* ── Top bar ── */
+    .topbar {
+      grid-column: 1 / -1;
+      grid-row: 1;
+      display: flex;
+      align-items: center;
+      padding: 0 1.5rem;
+      border-bottom: 1px solid var(--border);
+      background: rgba(12, 13, 20, 0.95);
+      backdrop-filter: blur(10px);
+      gap: 1rem;
+      z-index: 100;
+      min-height: 56px;
+    }
+    .topbar-logo {
+      font-family: var(--mono);
+      font-size: .85rem;
+      font-weight: 700;
+      letter-spacing: .1em;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .topbar-logo span { 
+      background: linear-gradient(135deg, var(--accent2), #a78bfa);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .topbar-sep { flex: 1; }
+    .topbar-tag {
+      font-family: var(--mono);
+      font-size: .6rem;
+      letter-spacing: .1em;
+      color: var(--muted2);
+      padding: 4px 12px;
+      border: 1px solid var(--border2);
+      border-radius: 6px;
+      transition: all var(--transition-fast);
+      white-space: nowrap;
+    }
+    .topbar-tag.active-job    { 
+      border-color: rgba(99,102,241,.4); 
+      color: #a5b4fc; 
+      background: rgba(99,102,241,.08);
+    }
+    .topbar-tag.active-intern { 
+      border-color: rgba(249,115,22,.35); 
+      color: var(--orange); 
+      background: rgba(249,115,22,.08);
+    }
+    .version-dot { 
+      width: 8px; height: 8px; 
+      border-radius: 50%; 
+      background: var(--green); 
+      box-shadow: 0 0 12px var(--green);
+      animation: pulse-dot 2s ease-in-out infinite;
+      flex-shrink: 0;
+    }
+    @keyframes pulse-dot {
+      0%, 100% { box-shadow: 0 0 8px var(--green); }
+      50% { box-shadow: 0 0 20px var(--green), 0 0 30px rgba(34,197,94,.3); }
+    }
+    .tooltip {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      cursor: help;
+    }
+    .tooltip::after {
+      content: attr(data-tip);
+      position: absolute;
+      bottom: calc(100% + 8px);
+      left: 50%;
+      transform: translateX(-50%) translateY(4px);
+      background: var(--bg3);
+      border: 1px solid var(--border2);
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: .6rem;
+      color: var(--text);
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transition: all var(--transition-fast);
+      z-index: 10;
+    }
+    .tooltip:hover::after {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* ── Left panel — Form ── */
+    .panel-left {
+      grid-column: 1;
+      grid-row: 2;
+      border-right: 1px solid var(--border);
+      background: var(--bg2);
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding: 1.2rem;
+      height: 100%;
+    }
+
+    /* ── Center panel — Pipeline + Results ── */
+    .panel-center {
+      grid-column: 2;
+      grid-row: 2;
+      overflow-y: auto;
+      overflow-x: hidden;
+      background: var(--bg);
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+
+    /* ── Right panel — Score + breakdown ── */
+    .panel-right {
+      grid-column: 3;
+      grid-row: 2;
+      border-left: 1px solid var(--border);
+      background: var(--bg2);
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding: 1.2rem;
+      height: 100%;
+    }
+
+    /* ═══════════════════════════════════════════════
+       FORM ELEMENTS
+    ═══════════════════════════════════════════════ */
+    .section-label {
+      font-family: var(--mono);
+      font-size: .6rem;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: .6rem;
+      display: flex; 
+      align-items: center; 
+      gap: .5rem;
+    }
+    .section-label::before {
+      content: '';
+      display: block;
+      width: 3px; 
+      height: 12px;
+      background: linear-gradient(180deg, var(--accent), var(--accent2));
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+
+    .opp-toggle { 
+      display: grid; 
+      grid-template-columns: 1fr 1fr; 
+      gap: .5rem; 
+      margin-bottom: 1.2rem;
+      padding: 4px;
+      background: var(--bg3);
+      border-radius: 8px;
+    }
+    .opp-btn {
+      padding: .6rem .5rem;
+      border-radius: 6px;
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--muted2);
+      font-family: var(--mono);
+      font-size: .72rem;
+      cursor: pointer;
+      transition: all var(--transition-normal) var(--ease-out-expo);
+      text-align: center;
+      font-weight: 500;
+    }
+    .opp-btn:hover { color: var(--text); }
+    .opp-btn.active-job { 
+      border-color: var(--accent); 
+      background: rgba(99,102,241,.12); 
+      color: #c7d2fe; 
+    }
+    .opp-btn.active-intern { 
+      border-color: var(--orange); 
+      background: rgba(249,115,22,.1);  
+      color: var(--orange); 
+    }
+
+    .form-group { margin-bottom: .8rem; }
+    .form-label {
+      display: block;
+      font-family: var(--mono);
+      font-size: .62rem;
+      color: var(--muted2);
+      margin-bottom: .3rem;
+      letter-spacing: .05em;
+    }
+    input, textarea, select {
+      width: 100%;
+      background: var(--bg3);
+      border: 1px solid var(--border2);
+      border-radius: 8px;
+      padding: .55rem .75rem;
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: .75rem;
+      outline: none;
+      transition: all var(--transition-fast);
+      resize: vertical;
+    }
+    input:hover, textarea:hover { border-color: var(--muted); }
+    input:focus, textarea:focus { 
+      border-color: var(--accent); 
+      box-shadow: 0 0 0 3px rgba(99,102,241,.1);
+    }
+    textarea { min-height: 60px; line-height: 1.5; }
+
+    .dropzone {
+      border: 2px dashed var(--border2);
+      border-radius: 12px;
+      padding: 1.2rem;
+      text-align: center;
+      cursor: pointer;
+      background: var(--bg3);
+      position: relative;
+      transition: all var(--transition-normal) var(--ease-out-expo);
+      margin-bottom: .8rem;
+    }
+    .dropzone:hover, .dropzone.drag { 
+      border-color: var(--accent); 
+      background: rgba(99,102,241,.06);
+      transform: translateY(-2px);
+    }
+    .dropzone input[type="file"] { 
+      position: absolute; 
+      inset: 0; 
+      opacity: 0; 
+      cursor: pointer; 
+      width: 100%; 
+      height: 100%; 
+    }
+    .dz-icon { font-size: 1.6rem; margin-bottom: .3rem; }
+    .dz-text { font-size: .7rem; color: var(--muted2); font-family: var(--mono); line-height: 1.6; }
+    .dz-text strong { color: #a5b4fc; }
+    .dz-file { 
+      font-size: .65rem; 
+      color: var(--green); 
+      font-family: var(--mono); 
+      margin-top: .35rem;
+      padding: 4px 12px;
+      background: rgba(34,197,94,.1);
+      border-radius: 4px;
+      display: inline-block;
+    }
+
+    .btn-run {
+      width: 100%;
+      padding: .8rem;
+      border: none;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--accent), #4f46e5);
+      color: #fff;
+      font-family: var(--sans);
+      font-weight: 600;
+      font-size: .85rem;
+      cursor: pointer;
+      margin-top: .5rem;
+      transition: all var(--transition-normal) var(--ease-out-expo);
+      display: flex; 
+      align-items: center; 
+      justify-content: center; 
+      gap: .5rem;
+      position: relative; 
+      overflow: hidden;
+    }
+    .btn-run::before {
+      content: '';
+      position: absolute; 
+      inset: 0;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,.1), transparent);
+      transform: translateX(-100%);
+      transition: transform .8s;
+    }
+    .btn-run:hover:not(:disabled)::before { transform: translateX(100%); }
+    .btn-run:hover:not(:disabled) { 
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(99,102,241,.3);
+    }
+    .btn-run:active:not(:disabled) { transform: translateY(0); }
+    .btn-run.intern { 
+      background: linear-gradient(135deg, var(--orange), #ea580c);
+    }
+    .btn-run:disabled { 
+      opacity: .5; 
+      cursor: not-allowed; 
+      transform: none;
+    }
+    .spinner {
+      width: 14px; 
+      height: 14px;
+      border: 2px solid rgba(255,255,255,.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      display: none;
+    }
+    .btn-run.loading .spinner { display: block; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .divider { border: none; border-top: 1px solid var(--border); margin: 1rem 0; }
+    .years-wrap { transition: all var(--transition-normal); }
+    .years-wrap.dim { opacity: .3; pointer-events: none; filter: blur(1px); }
+
+    .intern-note-bar {
+      background: rgba(249,115,22,.06); 
+      border: 1px solid rgba(249,115,22,.2);
+      border-radius: 6px; 
+      padding: .4rem .6rem; 
+      margin-bottom: .7rem;
+      font-family: var(--mono); 
+      font-size: .62rem; 
+      color: var(--orange); 
+      display: none;
+      transition: all var(--transition-normal);
+    }
+    .intern-note-bar.show { display: block; }
+
+    /* ═══════════════════════════════════════════════
+       VERTICAL PIPELINE VISUALIZER
+    ═══════════════════════════════════════════════ */
+    .pipeline-area {
+      padding: 1rem 1.5rem 0;
+      flex-shrink: 0;
+    }
+
+    .pipeline-header {
+      display: flex; 
+      align-items: center; 
+      gap: .6rem;
+      margin-bottom: 1rem;
+      padding: .7rem 1rem;
+      background: var(--bg3);
+      border-radius: 10px;
+      border: 1px solid var(--border);
+    }
+    .pipeline-title {
+      font-family: var(--mono);
+      font-size: .63rem;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      color: var(--muted2);
+    }
+    .pipeline-status-text {
+      font-family: var(--mono);
+      font-size: .63rem;
+      color: var(--muted);
+      margin-left: auto;
+      padding: 4px 10px;
+      border-radius: 4px;
+      background: var(--bg2);
+    }
+    .pipeline-status-text.running { color: var(--accent2); }
+    .pipeline-status-text.done    { color: var(--green); }
+    .pipeline-status-text.error   { color: var(--red); }
+
+    /* Vertical graph container */
+    .pipeline-graph-vertical {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0;
+      padding: 1rem 0.5rem;
+      background: var(--bg3);
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      max-height: 500px;
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+
+    /* Vertical node */
+    .p-node-v {
+      display: flex;
+      align-items: center;
+      gap: .8rem;
+      width: 100%;
+      position: relative;
+      padding: 0 1rem;
+    }
+    .p-node-box-v {
+      width: 200px;
+      height: 56px;
+      border-radius: 10px;
+      border: 2px solid var(--border2);
+      background: var(--bg2);
+      display: flex;
+      align-items: center;
+      gap: .7rem;
+      padding: 0 .8rem;
+      position: relative;
+      transition: all var(--transition-normal) var(--ease-out-expo);
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .p-node-box-v:hover {
+      transform: translateX(4px);
+      border-color: var(--muted);
+    }
+    .p-node-icon-v { 
+      font-size: 1.3rem; 
+      flex-shrink: 0;
+      transition: all var(--transition-normal); 
+    }
+    .p-node-content-v {
+      display: flex;
+      flex-direction: column;
+      gap: .15rem;
+      min-width: 0;
+    }
+    .p-node-label-v {
+      font-family: var(--mono);
+      font-size: .55rem;
+      color: var(--muted);
+      line-height: 1.2;
+      letter-spacing: .04em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .p-node-step-v {
+      font-family: var(--mono);
+      font-size: .5rem;
+      color: var(--muted2);
+      letter-spacing: .06em;
+      margin-left: auto;
+      flex-shrink: 0;
+    }
+
+    /* Vertical node states */
+    .p-node-box-v.pending  { border-color: var(--border2); background: var(--bg2); }
+    .p-node-box-v.running  {
+      border-color: var(--accent2);
+      background: rgba(34,211,238,.08);
+      box-shadow: 0 0 20px rgba(34,211,238,.2), inset 0 0 12px rgba(34,211,238,.04);
+      animation: nodeGlowV 1.2s ease-in-out infinite alternate;
+    }
+    .p-node-box-v.running .p-node-label-v { color: var(--accent2); }
+    .p-node-box-v.running .p-node-icon-v  { 
+      animation: nodePulseV 1s ease-in-out infinite alternate;
+      filter: drop-shadow(0 0 6px var(--accent2));
+    }
+    .p-node-box-v.done {
+      border-color: var(--green);
+      background: rgba(34,197,94,.08);
+      box-shadow: 0 0 12px rgba(34,197,94,.15);
+    }
+    .p-node-box-v.done .p-node-label-v { color: var(--green); }
+    .p-node-box-v.error {
+      border-color: var(--red);
+      background: rgba(239,68,68,.08);
+      box-shadow: 0 0 12px rgba(239,68,68,.15);
+    }
+    .p-node-box-v.error .p-node-label-v { color: var(--red); }
+
+    @keyframes nodeGlowV {
+      from { box-shadow: 0 0 10px rgba(34,211,238,.15), inset 0 0 8px rgba(34,211,238,.03); }
+      to   { box-shadow: 0 0 24px rgba(34,211,238,.35), inset 0 0 16px rgba(34,211,238,.08); }
+    }
+    @keyframes nodePulseV {
+      from { transform: scale(1); }
+      to   { transform: scale(1.15); }
+    }
+
+    /* Tick badge */
+    .p-node-tick-v {
+      position: absolute;
+      top: -6px; 
+      right: -6px;
+      width: 18px; 
+      height: 18px;
+      background: var(--green);
+      border-radius: 50%;
+      display: none;
+      align-items: center; 
+      justify-content: center;
+      font-size: .55rem;
+      color: #000;
+      font-weight: 700;
+      box-shadow: 0 0 12px var(--green);
+      animation: popIn .4s var(--ease-out-back);
+      z-index: 2;
+    }
+    .p-node-box-v.done .p-node-tick-v { display: flex; }
+    @keyframes popIn {
+      from { transform: scale(0) rotate(-45deg); opacity: 0; }
+      to   { transform: scale(1) rotate(0deg); opacity: 1; }
+    }
+
+    /* Vertical connector */
+    .p-connector-v {
+      width: 2px;
+      height: 24px;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-left: 100px;
+    }
+    .p-connector-line-v {
+      width: 2px;
+      height: 100%;
+      background: var(--border2);
+      position: absolute;
+      border-radius: 1px;
+      transition: all var(--transition-slow);
+    }
+    .p-connector-v.lit .p-connector-line-v {
+      background: linear-gradient(180deg, var(--green), var(--accent2));
+      box-shadow: 0 0 10px var(--accent2);
+    }
+    .p-connector-v.flowing .p-connector-line-v {
+      background: linear-gradient(180deg, var(--green), var(--accent2));
+      animation: connectorPulseV .8s ease-in-out infinite;
+    }
+    @keyframes connectorPulseV {
+      0%, 100% { opacity: 1; }
+      50% { opacity: .6; }
+    }
+
+    .p-connector-bolt-v {
+      position: absolute;
+      font-size: .9rem;
+      opacity: 0;
+      transition: opacity var(--transition-fast);
+      filter: drop-shadow(0 0 8px var(--accent2));
+      animation: boltFlashV .7s ease-in-out infinite;
+    }
+    .p-connector-v.flowing .p-connector-bolt-v { opacity: 1; }
+    @keyframes boltFlashV {
+      0%,100% { opacity: .2; transform: scale(.85); }
+      50%      { opacity: 1;  transform: scale(1.15); }
+    }
+
+    .p-connector-packet-v {
+      position: absolute;
+      width: 8px; 
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent2);
+      box-shadow: 0 0 12px var(--accent2);
+      left: 50%;
+      transform: translateX(-50%);
+      animation: packetFlowV .6s linear infinite;
+      display: none;
+    }
+    .p-connector-v.flowing .p-connector-packet-v { display: block; }
+    @keyframes packetFlowV {
+      from { top: -4px; opacity: 0; }
+      50%  { opacity: 1; }
+      to   { top: calc(100% + 4px); opacity: 0; }
+    }
+
+    /* Start/End nodes */
+    .p-node-start-v, .p-node-end-v {
+      width: 200px;
+      height: 40px;
+      border-radius: 20px;
+      border: 2px solid var(--border2);
+      background: var(--bg2);
+      display: flex; 
+      align-items: center; 
+      justify-content: center;
+      font-family: var(--mono);
+      font-size: .55rem;
+      color: var(--muted);
+      letter-spacing: .05em;
+      font-weight: 700;
+      transition: all var(--transition-normal);
+      flex-shrink: 0;
+    }
+    .p-node-end-v.lit {
+      border-color: var(--green);
+      background: rgba(34,197,94,.12);
+      color: var(--green);
+      box-shadow: 0 0 20px rgba(34,197,94,.4);
+      animation: endGlowV 1.5s ease-in-out infinite;
+    }
+    @keyframes endGlowV {
+      0%, 100% { box-shadow: 0 0 16px rgba(34,197,94,.3); }
+      50% { box-shadow: 0 0 32px rgba(34,197,94,.6); }
+    }
+
+    /* Log ticker */
+    .pipeline-log {
+      padding: .6rem 1.5rem;
+      font-family: var(--mono);
+      font-size: .62rem;
+      color: var(--muted2);
+      min-height: 24px;
+      display: flex; 
+      align-items: center; 
+      gap: .6rem;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg2);
+      flex-shrink: 0;
+    }
+    .log-dot { 
+      width: 6px; 
+      height: 6px; 
+      border-radius: 50%; 
+      background: var(--accent2); 
+      flex-shrink: 0;
+      animation: logPulse 1.5s ease-in-out infinite;
+    }
+    @keyframes logPulse {
+      0%, 100% { opacity: .5; }
+      50% { opacity: 1; }
+    }
+    .log-dot.green { background: var(--green); }
+    .log-dot.red   { background: var(--red); animation: none; }
+    #logText { transition: opacity .2s; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    /* ═══════════════════════════════════════════════
+       RESULTS AREA
+    ═══════════════════════════════════════════════ */
+    .results-area {
+      flex: 1;
+      padding: 1rem 1.5rem 1.5rem;
+      overflow-y: auto;
+      overflow-x: hidden;
+      min-height: 0;
+    }
+
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      gap: .8rem;
+      opacity: .35;
+      pointer-events: none;
+      min-height: 200px;
+    }
+    .empty-icon { font-size: 3rem; filter: grayscale(1); }
+    .empty-text { 
+      font-family: var(--mono); 
+      font-size: .7rem; 
+      color: var(--muted); 
+      text-align: center; 
+      line-height: 1.8;
+    }
+
+    .res-tabs { 
+      display: flex; 
+      gap: .3rem; 
+      flex-wrap: wrap; 
+      margin-bottom: 1rem;
+      padding: 4px;
+      background: var(--bg3);
+      border-radius: 8px;
+    }
+    .res-tab {
+      padding: 5px 12px;
+      border-radius: 6px;
+      border: 1px solid transparent;
+      background: transparent;
+      font-family: var(--mono);
+      font-size: .62rem;
+      color: var(--muted2);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+      font-weight: 500;
+      white-space: nowrap;
+    }
+    .res-tab:hover { 
+      color: var(--text); 
+      background: rgba(255,255,255,.03);
+    }
+    .res-tab.active { 
+      border-color: var(--accent); 
+      background: rgba(99,102,241,.1); 
+      color: #a5b4fc;
+    }
+    .res-tab-content { display: none; }
+    .res-tab-content.active { 
+      display: block; 
+      animation: fadeInUp .3s var(--ease-out-expo); 
+    }
+    @keyframes fadeInUp { 
+      from { opacity:0; transform: translateY(10px); } 
+      to { opacity:1; transform: none; } 
+    }
+
+    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .6rem; }
+    .info-cell { 
+      background: var(--bg3);
+      padding: .6rem .8rem;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      overflow: hidden;
+    }
+    .info-cell label { 
+      font-family: var(--mono); 
+      font-size: .56rem; 
+      color: var(--muted); 
+      display: block; 
+      margin-bottom: .15rem;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+    }
+    .info-cell span  { font-size: .8rem; word-break: break-all; font-weight: 500; }
+    .info-cell a     { 
+      color: #a5b4fc; 
+      text-decoration: none; 
+      font-size: .7rem;
+      transition: color var(--transition-fast);
+      word-break: break-all;
+    }
+    .info-cell a:hover { color: var(--accent2); text-decoration: underline; }
+
+    .skill-chips { display: flex; flex-wrap: wrap; gap: .35rem; }
+    .chip { 
+      padding: 3px 10px; 
+      border-radius: 20px; 
+      font-family: var(--mono); 
+      font-size: .62rem; 
+      font-weight: 500;
+      white-space: nowrap;
+    }
+    .chip-m { 
+      background: rgba(34,197,94,.1);  
+      border: 1px solid rgba(34,197,94,.3);  
+      color: #86efac; 
+    }
+    .chip-x { 
+      background: rgba(239,68,68,.08); 
+      border: 1px solid rgba(239,68,68,.25); 
+      color: #fca5a5; 
+    }
+    .chip-d { 
+      background: rgba(99,102,241,.1); 
+      border: 1px solid rgba(99,102,241,.25); 
+      color: #a5b4fc; 
+    }
+
+    .tl-list  { display: flex; flex-direction: column; gap: .6rem; }
+    .tl-item  { 
+      padding: .75rem .9rem; 
+      background: var(--bg3); 
+      border: 1px solid var(--border); 
+      border-left: 3px solid var(--accent); 
+      border-radius: 8px;
+    }
+    .tl-item.edu  { border-left-color: var(--accent2); }
+    .tl-item.ach  { border-left-color: var(--green); }
+    .tl-title { font-weight: 600; font-size: .8rem; line-height: 1.4; }
+    .tl-sub   { font-size: .65rem; color: var(--muted2); font-family: var(--mono); margin-top: .12rem; }
+    .tl-desc  { font-size: .7rem; color: var(--muted2); margin-top: .35rem; line-height: 1.6; }
+    .tl-date  { font-size: .6rem; color: var(--accent2); font-family: var(--mono); margin-top: .18rem; }
+
+    .proj-grid { display: grid; gap: .6rem; }
+    .proj-card { 
+      padding: .75rem .9rem; 
+      background: var(--bg3); 
+      border: 1px solid var(--border); 
+      border-radius: 8px;
+    }
+    .proj-name { font-weight: 600; font-size: .8rem; }
+    .proj-type { font-size: .6rem; color: var(--accent2); font-family: var(--mono); margin-top: .1rem; }
+    .proj-desc { font-size: .7rem; color: var(--muted2); margin-top: .3rem; line-height: 1.6; }
+
+    .json-box {
+      background: var(--bg3); 
+      border: 1px solid var(--border); 
+      border-radius: 8px;
+      padding: .9rem; 
+      font-family: var(--mono); 
+      font-size: .62rem;
+      overflow: auto; 
+      max-height: 350px; 
+      line-height: 1.6; 
+      white-space: pre-wrap;
+      word-break: break-all; 
+      color: #7c85b0;
+    }
+    .copy-btn {
+      float: right; 
+      margin-bottom: .4rem;
+      padding: 4px 12px; 
+      background: var(--bg3); 
+      border: 1px solid var(--border2);
+      border-radius: 6px; 
+      cursor: pointer; 
+      font-family: var(--mono); 
+      font-size: .6rem;
+      color: var(--muted2);
+      transition: all var(--transition-fast);
+    }
+    .copy-btn:hover { color: var(--text); border-color: var(--accent); }
+
+    .sum-box { 
+      background: var(--bg3); 
+      border: 1px solid var(--border); 
+      border-radius: 8px; 
+      padding: .8rem 1rem; 
+      font-size: .78rem; 
+      line-height: 1.7; 
+      color: var(--text); 
+    }
+
+    .err-bar {
+      background: rgba(239,68,68,.06); 
+      border: 1px solid rgba(239,68,68,.25);
+      border-radius: 8px; 
+      padding: .7rem .9rem; 
+      margin: .8rem 0;
+      font-family: var(--mono); 
+      font-size: .65rem; 
+      color: #fca5a5; 
+      line-height: 1.7;
+    }
+
+    /* ═══════════════════════════════════════════════
+       RIGHT PANEL — SCORES
+    ═══════════════════════════════════════════════ */
+    .big-score-card {
+      background: linear-gradient(135deg, var(--bg3), var(--bg2));
+      border: 1px solid var(--border2);
+      border-radius: 14px;
+      padding: 1.2rem;
+      margin-bottom: 1rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .big-score-card::before {
+      content: '';
+      position: absolute; 
+      top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, transparent, var(--accent), var(--accent2), transparent);
+    }
+    .big-score-top { 
+      display: flex; 
+      align-items: center; 
+      gap: 1rem; 
+      margin-bottom: 1rem; 
+    }
+    .big-gauge-wrap { 
+      position: relative; 
+      width: 100px; 
+      height: 100px; 
+      flex-shrink: 0; 
+    }
+    .big-gauge-wrap svg { transform: rotate(-90deg); }
+    .gauge-track-big { fill: none; stroke: var(--border2); stroke-width: 8; }
+    .gauge-fill-big  { 
+      fill: none; 
+      stroke-width: 8; 
+      stroke-linecap: round; 
+      transition: stroke-dashoffset 2s cubic-bezier(.4,0,.2,1);
+      filter: drop-shadow(0 0 6px currentColor);
+    }
+    .big-gauge-center {
+      position: absolute; 
+      inset: 0;
+      display: flex; 
+      flex-direction: column; 
+      align-items: center; 
+      justify-content: center;
+    }
+    .big-score-num { 
+      font-size: 1.8rem; 
+      font-weight: 700; 
+      line-height: 1; 
+      letter-spacing: -.03em;
+    }
+    .big-score-den { 
+      font-size: .55rem; 
+      font-family: var(--mono); 
+      color: var(--muted); 
+      margin-top: .1rem; 
+    }
+    .score-right { flex: 1; min-width: 0; }
+    .score-label  { 
+      font-size: 1rem; 
+      font-weight: 700; 
+      line-height: 1.2; 
+      margin-bottom: .25rem; 
+    }
+    .score-name   { 
+      font-size: .72rem; 
+      color: var(--muted2); 
+      font-family: var(--mono); 
+      margin-bottom: .4rem; 
+      white-space: nowrap; 
+      overflow: hidden; 
+      text-overflow: ellipsis; 
+    }
+    .score-opp { 
+      display: inline-block; 
+      padding: 3px 10px; 
+      border-radius: 20px; 
+      font-family: var(--mono); 
+      font-size: .6rem; 
+      font-weight: 600; 
+    }
+    .score-opp.job { 
+      background: rgba(99,102,241,.12); 
+      border: 1px solid rgba(99,102,241,.3); 
+      color: #a5b4fc; 
+    }
+    .score-opp.intern { 
+      background: rgba(249,115,22,.1);  
+      border: 1px solid rgba(249,115,22,.3); 
+      color: var(--orange); 
+    }
+
+    .weight-grid { display: flex; flex-direction: column; gap: .45rem; }
+    .wt-row { 
+      display: flex; 
+      align-items: center; 
+      gap: .5rem;
+      padding: .35rem .5rem;
+      background: var(--bg2);
+      border-radius: 6px;
+      transition: all var(--transition-fast);
+    }
+    .wt-row:hover { background: var(--bg3); transform: translateX(2px); }
+    .wt-dot  { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .wt-lbl  { 
+      font-family: var(--mono); 
+      font-size: .6rem; 
+      color: var(--muted2); 
+      width: 85px; 
+      flex-shrink: 0; 
+    }
+    .wt-bar  { 
+      flex: 1; 
+      height: 4px; 
+      background: var(--border2); 
+      border-radius: 2px; 
+      overflow: hidden; 
+      min-width: 0;
+    }
+    .wt-fill { 
+      height: 100%; 
+      border-radius: 2px; 
+      transition: width 1.6s cubic-bezier(.4,0,.2,1); 
+    }
+    .wt-num  { 
+      font-family: var(--mono); 
+      font-size: .6rem; 
+      width: 30px; 
+      text-align: right; 
+      flex-shrink: 0;
+      font-weight: 600;
+    }
+    .wt-pts  { 
+      font-family: var(--mono); 
+      font-size: .55rem; 
+      color: var(--muted); 
+      width: 32px; 
+      text-align: right; 
+      flex-shrink: 0; 
+    }
+
+    .mini-cards { 
+      display: grid; 
+      grid-template-columns: 1fr 1fr; 
+      gap: .5rem; 
+      margin-top: .8rem; 
+    }
+    .mini-card {
+      background: var(--bg3); 
+      border: 1px solid var(--border); 
+      border-radius: 10px;
+      padding: .65rem .75rem; 
+      position: relative; 
+      overflow: hidden;
+      transition: all var(--transition-fast);
+    }
+    .mini-card:hover { transform: translateY(-1px); }
+    .mini-card::after {
+      content: '';
+      position: absolute; 
+      top: 0; left: 0; 
+      width: 3px; 
+      height: 100%;
+      border-radius: 0 2px 2px 0;
+    }
+    .mc-skill::after   { background: var(--accent2); }
+    .mc-exp::after     { background: var(--yellow); }
+    .mc-edu::after     { background: var(--pink); }
+    .mc-ach::after     { background: var(--green); }
+    .mc-social::after  { background: #84cc16; }
+    .mc-sem::after     { background: #a78bfa; }
+    .mc-title { 
+      font-family: var(--mono); 
+      font-size: .55rem; 
+      color: var(--muted2); 
+      margin-bottom: .35rem; 
+    }
+    .mc-score-val { 
+      font-size: 1.1rem; 
+      font-weight: 700; 
+      line-height: 1;
+    }
+    .mc-bar { 
+      height: 3px; 
+      background: var(--border2); 
+      border-radius: 2px; 
+      overflow: hidden; 
+      margin-top: .4rem; 
+    }
+    .mc-bar-fill { 
+      height: 100%; 
+      border-radius: 2px; 
+      transition: width 1.5s cubic-bezier(.4,0,.2,1); 
+    }
+
+    .sem-box {
+      background: var(--bg3); 
+      border: 1px solid var(--border); 
+      border-radius: 10px;
+      padding: .7rem .85rem; 
+      margin-top: .8rem;
+      font-size: .7rem; 
+      color: var(--muted2); 
+      line-height: 1.7;
+      font-style: italic;
+    }
+    .sem-box strong { color: var(--text); font-style: normal; }
+
+    .social-row { 
+      display: grid; 
+      grid-template-columns: repeat(3,1fr); 
+      gap: .5rem; 
+      margin-top: .8rem; 
+    }
+    .soc-card { 
+      background: var(--bg3); 
+      border: 1px solid var(--border); 
+      border-radius: 10px; 
+      padding: .55rem .6rem;
+      transition: all var(--transition-fast);
+    }
+    .soc-card:hover { border-color: var(--accent); }
+    .soc-hdr  { 
+      display: flex; 
+      align-items: center; 
+      gap: .35rem; 
+      margin-bottom: .25rem; 
+    }
+    .soc-icon { font-size: .9rem; }
+    .soc-name { 
+      font-family: var(--mono); 
+      font-size: .62rem; 
+      font-weight: 700; 
+      flex: 1; 
+    }
+    .soc-val  { 
+      font-family: var(--mono); 
+      font-size: .68rem; 
+      font-weight: 700; 
+    }
+    .soc-stat { 
+      font-family: var(--mono); 
+      font-size: .56rem; 
+      color: var(--muted2); 
+      line-height: 1.5;
+    }
+    .soc-na { 
+      text-align: center; 
+      padding: .35rem; 
+      font-family: var(--mono); 
+      font-size: .58rem; 
+      color: var(--muted); 
+    }
+
+    .right-empty {
+      display: flex; 
+      flex-direction: column; 
+      align-items: center; 
+      justify-content: center;
+      height: 100%; 
+      gap: .6rem; 
+      opacity: .25;
+      font-family: var(--mono); 
+      font-size: .65rem; 
+      color: var(--muted); 
+      text-align: center;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: .8rem 1.2rem;
+      font-family: var(--mono);
+      font-size: .65rem;
+      color: var(--text);
+      z-index: 10000;
+      animation: toastIn .3s var(--ease-out-expo), toastOut .3s var(--ease-out-expo) 2.5s forwards;
+      box-shadow: 0 8px 24px rgba(0,0,0,.4);
+    }
+    @keyframes toastIn {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    @keyframes toastOut {
+      from { opacity: 1; }
+      to { opacity: 0; transform: translateY(10px); }
+    }
+
+    /* Responsive */
+    @media (max-width: 1400px) {
+      .shell {
+        grid-template-columns: 300px 1fr 350px;
+      }
+      .p-node-box-v { width: 180px; }
+      .p-node-start-v, .p-node-end-v { width: 180px; }
+      .p-connector-v { margin-left: 90px; }
+    }
+    @media (max-width: 1200px) {
+      .shell {
+        grid-template-columns: 1fr;
+        grid-template-rows: 56px auto 1fr auto;
+        overflow-y: auto;
+      }
+      .panel-left { grid-column: 1; grid-row: 2; border-right: none; border-bottom: 1px solid var(--border); max-height: 50vh; }
+      .panel-center { grid-column: 1; grid-row: 3; }
+      .panel-right { grid-column: 1; grid-row: 4; border-left: none; border-top: 1px solid var(--border); }
+      
+      .pipeline-graph-vertical { max-height: none; }
+      .p-node-box-v { width: 100%; max-width: 400px; }
+      .p-node-start-v, .p-node-end-v { width: 100%; max-width: 400px; }
+      .p-connector-v { margin-left: 50%; }
+    }
+  </style>
+</head>
+<body>
+<div class="shell">
+
+  <!-- ══════ TOP BAR ══════ -->
+  <header class="topbar">
+    <div class="topbar-logo">RESUME<span>IQ</span></div>
+    <div class="version-dot"></div>
+    <span class="topbar-tag">v1.3 · 7 AGENTS · LANGGRAPH</span>
+    <div class="topbar-sep"></div>
+    <span class="topbar-tag" id="modeTag">💼 JOB MODE</span>
+    <span class="tooltip" data-tip="Real-time AI analysis">ℹ️</span>
+  </header>
+
+  <!-- ══════ LEFT — FORM ══════ -->
+  <aside class="panel-left">
+    <div class="section-label">Opportunity Type</div>
+    <div class="opp-toggle">
+      <button class="opp-btn active-job" id="btnJob" onclick="setOpp('job')">💼 Full-Time Job</button>
+      <button class="opp-btn" id="btnIntern" onclick="setOpp('internship')">🎓 Internship</button>
+    </div>
+    <input type="hidden" id="oppType" value="job"/>
+
+    <div class="intern-note-bar" id="internNote">
+      ⚡ Intern mode — skills &amp; projects weighted higher, experience penalty off
+    </div>
+
+    <div class="section-label">Resume File</div>
+    <div class="dropzone" id="dropzone">
+      <input type="file" id="resumeFile" accept=".pdf,.docx,.doc"/>
+      <div class="dz-icon">📄</div>
+      <div class="dz-text"><strong>Click to upload</strong> or drag &amp; drop</div>
+      <div class="dz-text">.pdf · .docx · .doc (Max 10MB)</div>
+      <div class="dz-file" id="fileName"></div>
+    </div>
+
+    <hr class="divider"/>
+    <div class="section-label">Opportunity Details</div>
+
+    <div class="form-group">
+      <label class="form-label" id="titleLbl">Job Title *</label>
+      <input type="text" id="jobTitle" placeholder="Senior ML Engineer" required/>
+    </div>
+    <div class="form-group">
+      <label class="form-label" id="roleLbl">Job Role *</label>
+      <input type="text" id="jobRole" placeholder="ML Engineer" required/>
+    </div>
+    <div class="form-group">
+      <label class="form-label" id="descLbl">Description *</label>
+      <textarea id="jobDesc" rows="4" placeholder="Paste full job/internship description..." required></textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Skills Required <span style="color:var(--muted);">(comma separated)</span></label>
+      <input type="text" id="skills" placeholder="Python, PyTorch, LangChain, FastAPI"/>
+    </div>
+    <div class="form-group years-wrap" id="yearsWrap">
+      <label class="form-label">Years of Experience Required</label>
+      <input type="number" id="yearsExp" placeholder="3" min="0" max="30" step="0.5"/>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Education Required</label>
+      <input type="text" id="eduReq" placeholder="B.Tech in Computer Science"/>
+    </div>
+
+    <button class="btn-run" id="runBtn" onclick="runPipeline()">
+      <span class="spinner" id="spinner"></span>
+      <span id="runBtnTxt">⚡ Run Pipeline</span>
+    </button>
+  </aside>
+
+  <!-- ══════ CENTER — PIPELINE + RESULTS ══════ -->
+  <main class="panel-center">
+    <div class="pipeline-area">
+      <div class="pipeline-header">
+        <div class="pipeline-title">⚙️ LangGraph Pipeline</div>
+        <div class="pipeline-status-text" id="pipeStatusTxt">idle</div>
+      </div>
+      <div class="pipeline-graph-vertical" id="pipelineGraph">
+        <!-- Built by JS -->
+      </div>
+    </div>
+    <div class="pipeline-log">
+      <div class="log-dot" id="logDot"></div>
+      <span id="logText">⏳ Waiting for input…</span>
+    </div>
+    <div class="results-area" id="resultsArea">
+      <div class="empty-state">
+        <div class="empty-icon">🔬</div>
+        <div class="empty-text">Fill in the form &amp; upload a resume<br/>to start the AI analysis pipeline</div>
+      </div>
+    </div>
+  </main>
+
+  <!-- ══════ RIGHT — SCORES ══════ -->
+  <aside class="panel-right" id="panelRight">
+    <div class="right-empty" id="rightEmpty">
+      <div style="font-size:2rem">📊</div>
+      <div>Scores will appear<br/>after pipeline completes</div>
+    </div>
+    <div id="rightContent" style="display:none"></div>
+  </aside>
+
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════
+   PIPELINE NODES DEFINITION
+═══════════════════════════════════════════════════ */
+const NODES = [
+  { id:'parser',      icon:'📄', label:'Resume Parser',       step:'01', tooltip:'Extract text & structure from resume' },
+  { id:'skills',      icon:'🔍', label:'Skill Matching',       step:'02', tooltip:'Match skills against job requirements' },
+  { id:'experience',  icon:'💼', label:'Experience Scoring',   step:'03', tooltip:'Evaluate work history relevance' },
+  { id:'education',   icon:'🎓', label:'Education Scoring',    step:'04', tooltip:'Assess educational qualifications' },
+  { id:'achievement', icon:'🏆', label:'Achievement Scoring',  step:'05', tooltip:'Score achievements & certifications' },
+  { id:'social',      icon:'🌐', label:'Social Profile Agent', step:'06', tooltip:'Analyze GitHub, LeetCode, Codeforces' },
+  { id:'llm',         icon:'🧠', label:'LLM Scoring + Regress',step:'07', tooltip:'Final AI scoring with regression' },
+];
+
+const NODE_TIMING = { parser:6000, skills:5000, experience:8000, education:6000, achievement:5000, social:7000, llm:5000 };
+
+/* ═══════════════════════════════════════════════════
+   BUILD VERTICAL PIPELINE GRAPH
+═══════════════════════════════════════════════════ */
+function buildPipelineGraph() {
+  const container = document.getElementById('pipelineGraph');
+  container.innerHTML = '';
+
+  // START node
+  const startEl = document.createElement('div');
+  startEl.className = 'p-node-start-v';
+  startEl.textContent = '▶ START';
+  startEl.title = 'Pipeline Start';
+  container.appendChild(startEl);
+
+  // Connector from START
+  container.appendChild(makeConnectorV('conn-start', false));
+
+  NODES.forEach((node, i) => {
+    // Node
+    const nodeEl = document.createElement('div');
+    nodeEl.className = 'p-node-v';
+    nodeEl.innerHTML = `
+      <div class="p-node-box-v pending" id="node-${node.id}" title="${node.tooltip}">
+        <div class="p-node-tick-v">✓</div>
+        <div class="p-node-icon-v">${node.icon}</div>
+        <div class="p-node-content-v">
+          <div class="p-node-label-v">${node.label}</div>
+        </div>
+        <div class="p-node-step-v">${node.step}</div>
+      </div>`;
+    container.appendChild(nodeEl);
+
+    // Connector after node (except last)
+    if (i < NODES.length - 1) {
+      container.appendChild(makeConnectorV(`conn-${node.id}`, false));
+    }
+  });
+
+  // Connector to END
+  container.appendChild(makeConnectorV('conn-end', false));
+
+  // END node
+  const endEl = document.createElement('div');
+  endEl.className = 'p-node-end-v';
+  endEl.id = 'node-end';
+  endEl.textContent = '✓ COMPLETE';
+  endEl.title = 'Pipeline Complete';
+  container.appendChild(endEl);
+}
+
+function makeConnectorV(id, lit) {
+  const el = document.createElement('div');
+  el.className = `p-connector-v${lit ? ' lit' : ''}`;
+  el.id = id;
+  el.innerHTML = `
+    <div class="p-connector-line-v"></div>
+    <div class="p-connector-bolt-v">⚡</div>
+    <div class="p-connector-packet-v"></div>`;
+  return el;
+}
+
+buildPipelineGraph();
+
+/* ═══════════════════════════════════════════════════
+   PIPELINE ANIMATION CONTROLLER
+═══════════════════════════════════════════════════ */
+let pipelineSimInterval = null;
+
+function resetPipeline() {
+  NODES.forEach(n => setNodeState(n.id, 'pending'));
+  document.querySelectorAll('.p-connector-v').forEach(c => {
+    c.classList.remove('lit', 'flowing');
+  });
+  document.getElementById('node-end').classList.remove('lit');
+  setPipeStatus('idle', 'idle');
+}
+
+function setNodeState(nodeId, state) {
+  const el = document.getElementById(`node-${nodeId}`);
+  if (!el) return;
+  el.className = `p-node-box-v ${state}`;
+}
+
+function setConnectorStateV(connId, state) {
+  const el = document.getElementById(connId);
+  if (!el) return;
+  el.classList.remove('lit', 'flowing');
+  if (state) el.classList.add(state);
+}
+
+function setPipeStatus(state, text) {
+  const el = document.getElementById('pipeStatusTxt');
+  el.className = `pipeline-status-text ${state}`;
+  el.textContent = text;
+}
+
+function setLog(text, color='') {
+  const dot = document.getElementById('logDot');
+  const txt = document.getElementById('logText');
+  dot.className = `log-dot ${color}`;
+  txt.style.opacity = '0';
+  setTimeout(() => { txt.textContent = text; txt.style.opacity = '1'; }, 100);
+}
+
+function simulatePipeline(totalExpectedMs) {
+  if (pipelineSimInterval) clearInterval(pipelineSimInterval);
+
+  let nodeIndex = -1;
+  let elapsed = 0;
+  const tickMs = 200;
+  const cumulative = [];
+  let cum = 0;
+  NODES.forEach(n => { cum += NODE_TIMING[n.id]; cumulative.push(cum); });
+  const total = cum;
+
+  setPipeStatus('running', 'running…');
+  setConnectorStateV('conn-start', 'flowing');
+
+  pipelineSimInterval = setInterval(() => {
+    elapsed += tickMs;
+    const ratio = Math.min(elapsed / totalExpectedMs, 0.95);
+    const simElapsed = ratio * total;
+
+    let activeIdx = 0;
+    for (let i = 0; i < cumulative.length; i++) {
+      if (simElapsed >= cumulative[i]) activeIdx = i + 1;
+    }
+    activeIdx = Math.min(activeIdx, NODES.length - 1);
+
+    if (activeIdx > nodeIndex) {
+      if (nodeIndex >= 0) {
+        setNodeState(NODES[nodeIndex].id, 'done');
+        setConnectorStateV(`conn-${NODES[nodeIndex].id}`, 'lit');
+        if (nodeIndex + 1 < NODES.length) {
+          setConnectorStateV(`conn-${NODES[nodeIndex].id}`, 'lit');
+        }
+      }
+      nodeIndex = activeIdx;
+      setNodeState(NODES[nodeIndex].id, 'running');
+      const incomingId = nodeIndex === 0 ? 'conn-start' : `conn-${NODES[nodeIndex-1].id}`;
+      setConnectorStateV(incomingId, 'flowing');
+      setLog(`[Agent ${NODES[nodeIndex].step}] ${NODES[nodeIndex].label} running…`, '');
+    }
+  }, tickMs);
+}
+
+function completePipeline(success) {
+  if (pipelineSimInterval) { clearInterval(pipelineSimInterval); pipelineSimInterval = null; }
+  NODES.forEach((n, i) => {
+    setNodeState(n.id, success ? 'done' : (i === NODES.length - 1 ? 'error' : 'done'));
+  });
+  NODES.forEach((n, i) => {
+    setConnectorStateV(i === 0 ? 'conn-start' : `conn-${NODES[i-1].id}`, 'lit');
+    setConnectorStateV(`conn-${n.id}`, 'lit');
+  });
+  setConnectorStateV('conn-end', 'lit');
+  if (success) {
+    document.getElementById('node-end').classList.add('lit');
+    setPipeStatus('done', '✅ Complete');
+    setLog('🎉 Pipeline complete — all 7 agents finished successfully', 'green');
+  } else {
+    setPipeStatus('error', '❌ Error');
+    setLog('⚠️ Pipeline error — check server connection', 'red');
+  }
+}
+
+/* ═══════════════════════════════════════════════════
+   OPPORTUNITY TOGGLE
+═══════════════════════════════════════════════════ */
+function setOpp(type) {
+  document.getElementById('oppType').value = type;
+  const isIntern = type === 'internship';
+  document.getElementById('btnJob').className = `opp-btn ${isIntern ? '' : 'active-job'}`;
+  document.getElementById('btnIntern').className = `opp-btn ${isIntern ? 'active-intern' : ''}`;
+  document.getElementById('internNote').classList.toggle('show', isIntern);
+  document.getElementById('yearsWrap').classList.toggle('dim', isIntern);
+  document.getElementById('runBtn').classList.toggle('intern', isIntern);
+  const modeTag = document.getElementById('modeTag');
+  modeTag.textContent = isIntern ? '🎓 INTERNSHIP MODE' : '💼 JOB MODE';
+  modeTag.className = `topbar-tag ${isIntern ? 'active-intern' : 'active-job'}`;
+  const lbl = isIntern ? 'Internship' : 'Job';
+  document.getElementById('titleLbl').textContent = `${lbl} Title *`;
+  document.getElementById('roleLbl').textContent = `${lbl} Role *`;
+  document.getElementById('descLbl').textContent = `${lbl} Description *`;
+  document.getElementById('runBtnTxt').textContent = isIntern ? '⚡ Run Pipeline (Internship)' : '⚡ Run Pipeline';
+  document.getElementById('jobTitle').placeholder = isIntern ? 'ML Engineer Intern' : 'Senior ML Engineer';
+}
+
+/* ═══════════════════════════════════════════════════
+   DROPZONE
+═══════════════════════════════════════════════════ */
+const MAX_FILE_SIZE = 10 * 1024 * 1024;
+const dz = document.getElementById('dropzone'), fi = document.getElementById('resumeFile');
+const ALLOWED_TYPES = ['.pdf', '.docx', '.doc'];
+
+function validateFile(file) {
+  if (!file) return false;
+  const ext = '.' + file.name.split('.').pop().toLowerCase();
+  if (!ALLOWED_TYPES.includes(ext)) { showToast('⚠️ Invalid file type. Use PDF, DOCX, or DOC'); return false; }
+  if (file.size > MAX_FILE_SIZE) { showToast('⚠️ File too large. Max size is 10MB'); return false; }
+  return true;
+}
+
+fi.addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (file && validateFile(file)) {
+    document.getElementById('fileName').textContent = '✓ ' + file.name;
+  } else { fi.value = ''; }
+});
+
+dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag'); });
+dz.addEventListener('dragleave', () => dz.classList.remove('drag'));
+dz.addEventListener('drop', e => {
+  e.preventDefault(); dz.classList.remove('drag');
+  const file = e.dataTransfer.files[0];
+  if (file && validateFile(file)) {
+    fi.files = e.dataTransfer.files;
+    document.getElementById('fileName').textContent = '✓ ' + file.name;
+  }
+});
+
+/* ═══════════════════════════════════════════════════
+   TOAST
+═══════════════════════════════════════════════════ */
+function showToast(message) {
+  const existing = document.querySelector('.toast');
+  if (existing) existing.remove();
+  const toast = document.createElement('div');
+  toast.className = 'toast';
+  toast.textContent = message;
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 3000);
+}
+
+/* ═══════════════════════════════════════════════════
+   HELPERS
+═══════════════════════════════════════════════════ */
+function v(x) { return x || '<span style="color:var(--muted)">—</span>'; }
+function bc(x) { return x >= 0.7 ? 'var(--green)' : x >= 0.4 ? 'var(--yellow)' : 'var(--red)'; }
+function re(s, rx, d=0) { const m = s?.match(rx); return m ? parseFloat(m[1]) : d; }
+
+function setLoading(on) {
+  const btn = document.getElementById('runBtn');
+  btn.disabled = on;
+  btn.classList.toggle('loading', on);
+  document.getElementById('spinner').style.display = on ? 'block' : 'none';
+  if (!on) {
+    const isIntern = document.getElementById('oppType').value === 'internship';
+    document.getElementById('runBtnTxt').textContent = isIntern ? '⚡ Run Pipeline (Internship)' : '⚡ Run Pipeline';
+  } else {
+    document.getElementById('runBtnTxt').textContent = 'Running…';
+  }
+}
+
+/* ═══════════════════════════════════════════════════
+   SCORE RENDERING
+═══════════════════════════════════════════════════ */
+let gaugeId = 0;
+function makeGaugeSVG(score10, size=100) {
+  const id = 'g' + (++gaugeId);
+  const r = (size/2) - 10, cx = size/2, cy = size/2, c = 2*Math.PI*r;
+  const color = bc(score10/10);
+  return { id, r, c, color, size, cx, cy,
+    html: `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+      <circle class="gauge-track-big" cx="${cx}" cy="${cy}" r="${r}"/>
+      <circle class="gauge-fill-big" cx="${cx}" cy="${cy}" r="${r}" stroke="${color}" stroke-dasharray="${c}" stroke-dashoffset="${c}" id="${id}"/>
+    </svg>`,
+    animate(delay=200) {
+      setTimeout(() => {
+        const el = document.getElementById(id);
+        if(el) el.style.strokeDashoffset = String(c*(1-score10/10));
+      }, delay);
+    }
+  };
+}
+
+function renderRightPanel(data) {
+  const fs = data.final_score || {}, bd = fs.breakdown || {};
+  const ss = data.skill_score, es = data.experience_score;
+  const edu = data.education_score, ach = data.achievement_score;
+  const soc = data.social_score, sem = data.semantic_score;
+  const isIntern = data.opportunity_type === 'internship';
+  const pi = data.parsed_resume?.personal_info || {};
+  const score = fs.total_score || 0;
+  const color = bc(score / 100);
+
+  const bg = makeGaugeSVG(score / 10, 100);
+
+  const WDEFS = isIntern ? [
+    { k:'skill', lbl:'Skill Match', col:'var(--accent2)' },
+    { k:'semantic', lbl:'Semantic Fit', col:'#a78bfa' },
+    { k:'achievement', lbl:'Achievements', col:'var(--green)' },
+    { k:'education', lbl:'Education', col:'var(--pink)' },
+    { k:'social', lbl:'Social', col:'#84cc16' },
+    { k:'experience', lbl:'Experience', col:'var(--yellow)' },
+  ] : [
+    { k:'skill', lbl:'Skill Match', col:'var(--accent2)' },
+    { k:'experience', lbl:'Experience', col:'var(--yellow)' },
+    { k:'semantic', lbl:'Semantic Fit', col:'#a78bfa' },
+    { k:'education', lbl:'Education', col:'var(--pink)' },
+    { k:'achievement', lbl:'Achievements', col:'var(--green)' },
+    { k:'social', lbl:'Social', col:'#84cc16' },
+  ];
+
+  const weightRows = WDEFS.map(w => {
+    const raw = bd[w.k]?.raw_score || 0;
+    const contrib = bd[w.k]?.weighted_contribution || 0;
+    return `<div class="wt-row" title="${w.lbl}: Raw ${raw.toFixed(1)} / +${contrib.toFixed(1)}">
+      <div class="wt-dot" style="background:${w.col}"></div>
+      <span class="wt-lbl">${w.lbl}</span>
+      <div class="wt-bar"><div class="wt-fill" id="wf-${w.k}" style="width:0%;background:${w.col}"></div></div>
+      <span class="wt-num" style="color:${bc(raw/10)}">${raw.toFixed(1)}</span>
+      <span class="wt-pts">+${contrib.toFixed(1)}</span>
+    </div>`;
+  }).join('');
+
+  const miniData = [
+    { id:'mc-sk', cls:'mc-skill', title:'02 · SKILLS', score:ss?.score||0, col:'var(--accent2)' },
+    { id:'mc-ex', cls:'mc-exp', title:'03 · EXPERIENCE', score:es?.score||0, col:'var(--yellow)' },
+    { id:'mc-ed', cls:'mc-edu', title:'04 · EDUCATION', score:edu?.score||0,col:'var(--pink)' },
+    { id:'mc-ac', cls:'mc-ach', title:'05 · ACHIEVEMENTS',score:ach?.score||0,col:'var(--green)' },
+    { id:'mc-so', cls:'mc-social', title:'06 · SOCIAL', score:soc?.score||0,col:'#84cc16' },
+    { id:'mc-sm', cls:'mc-sem', title:'07 · SEMANTIC', score:sem?.score||0,col:'#a78bfa' },
+  ];
+  const miniHTML = miniData.map(m => `
+    <div class="mini-card ${m.cls}" title="${m.title}: ${m.score.toFixed(1)}/10">
+      <div class="mc-title">${m.title}</div>
+      <div class="mc-score-val" style="color:${bc(m.score/10)}">${m.score.toFixed(1)}</div>
+      <div class="mc-bar"><div class="mc-bar-fill" id="${m.id}" style="width:0%;background:${m.col}"></div></div>
+    </div>`).join('');
+
+  const gh = soc?.github_data, lc = soc?.leetcode_data, cf = soc?.codeforces_data;
+  const ghS = re(soc?.reasoning, /GitHub score: ([\d.]+)/);
+  const lcS = re(soc?.reasoning, /LeetCode score: ([\d.]+)/);
+  const cfS = re(soc?.reasoning, /Codeforces score: ([\d.]+)/);
+  const socCards = `
+    <div class="soc-card">${gh ? `<div class="soc-hdr"><span class="soc-icon">⚙️</span><span class="soc-name">GitHub</span><span class="soc-val" style="color:${bc(ghS/10)}">${ghS.toFixed(1)}</span></div><div class="soc-stat">📦 ${gh.public_repos||0} repos · ⭐ ${gh.total_stars||0}</div>` : `<div class="soc-hdr"><span class="soc-icon">⚙️</span><span class="soc-name">GitHub</span></div><div class="soc-na">Not found</div>`}</div>
+    <div class="soc-card">${lc ? `<div class="soc-hdr"><span class="soc-icon">💡</span><span class="soc-name">LeetCode</span><span class="soc-val" style="color:${bc(lcS/10)}">${lcS.toFixed(1)}</span></div><div class="soc-stat">✅ ${lc.total_solved||0} solved · 🔴 ${lc.hard_solved||0} hard</div>` : `<div class="soc-hdr"><span class="soc-icon">💡</span><span class="soc-name">LeetCode</span></div><div class="soc-na">Not found</div>`}</div>
+    <div class="soc-card">${cf ? `<div class="soc-hdr"><span class="soc-icon">⚡</span><span class="soc-name">CF</span><span class="soc-val" style="color:${bc(cfS/10)}">${cfS.toFixed(1)}</span></div><div class="soc-stat">📊 ${cf.rating||0} rating · ${cf.rank||'Unrated'}</div>` : `<div class="soc-hdr"><span class="soc-icon">⚡</span><span class="soc-name">CF</span></div><div class="soc-na">Not found</div>`}</div>`;
+
+  document.getElementById('rightEmpty').style.display = 'none';
+  const rc = document.getElementById('rightContent');
+  rc.style.display = 'block';
+  rc.innerHTML = `
+    <div class="big-score-card">
+      <div class="big-score-top">
+        <div class="big-gauge-wrap">
+          ${bg.html}
+          <div class="big-gauge-center">
+            <span class="big-score-num" style="color:${color}" id="bigNum">0</span>
+            <span class="big-score-den">/ 100</span>
+          </div>
+        </div>
+        <div class="score-right">
+          <div class="score-label" style="color:${color}">${bd.label||'—'}</div>
+          <div class="score-name">${pi.full_name||'Unknown Candidate'}</div>
+          <span class="score-opp ${isIntern?'intern':'job'}">${isIntern?'🎓 Internship':'💼 Full-Time'}</span>
+        </div>
+      </div>
+      <div class="weight-grid">${weightRows}</div>
+    </div>
+    <div class="section-label">📊 Component Scores</div>
+    <div class="mini-cards">${miniHTML}</div>
+    ${sem?.reasoning ? `<div class="sem-box"><strong>🧠 AI Insight:</strong> ${sem.reasoning}</div>` : ''}
+    <div class="section-label" style="margin-top:.8rem">🌐 Social Profiles</div>
+    <div class="social-row">${socCards}</div>`;
+
+  setTimeout(() => {
+    bg.animate(100);
+    let cur = 0;
+    const step = Math.max(0.1, score / 60);
+    const iv = setInterval(() => {
+      cur = Math.min(cur+step, score);
+      const el = document.getElementById('bigNum');
+      if(el) el.textContent = cur.toFixed(1);
+      if(cur >= score) clearInterval(iv);
+    }, 16);
+    WDEFS.forEach(w => {
+      const el = document.getElementById(`wf-${w.k}`);
+      if(el) el.style.width = Math.min(100, (bd[w.k]?.raw_score||0)*10) + '%';
+    });
+    miniData.forEach(m => {
+      const el = document.getElementById(m.id);
+      if(el) el.style.width = Math.min(100, m.score*10) + '%';
+    });
+  }, 300);
+}
+
+/* ═══════════════════════════════════════════════════
+   RESULTS TABS
+═══════════════════════════════════════════════════ */
+function renderResults(data) {
+  const r = data.parsed_resume || {}, pi = r.personal_info || {};
+  const ss = data.skill_score;
+  const mNorm = new Set((ss?.matched_skills||[]).map(s => s.toLowerCase().replace(/[\s\-_.]+/g,'')));
+
+  const skH = (r.skills||[]).map(s =>
+    `<span class="chip ${mNorm.has(s.toLowerCase().replace(/[\s\-_.]+/g,''))?'chip-m':'chip-d'}">${s}</span>`
+  ).join('') || '<span style="color:var(--muted);font-size:.7rem">No skills detected</span>';
+
+  const matchH = (ss?.matched_skills||[]).map(s=>`<span class="chip chip-m">${s}</span>`).join('')
+    || '<span style="color:var(--muted);font-size:.7rem">None matched</span>';
+  const missH = (ss?.missing_skills||[]).map(s=>`<span class="chip chip-x">${s}</span>`).join('')
+    || '<span style="color:var(--green);font-size:.7rem">✓ All skills matched!</span>';
+
+  const exH = (r.experience||[]).map(e => `
+    <div class="tl-item">
+      <div class="tl-title">${e.position||'Untitled'}</div>
+      <div class="tl-sub">${e.company||'Unknown'}${e.is_current?' · <span style="color:var(--green)">Current</span>':''}</div>
+      <div class="tl-date">📅 ${e.start_date||'?'} → ${e.end_date||'Present'}</div>
+      ${e.description?`<div class="tl-desc">${e.description}</div>`:''}
+    </div>`).join('') || '<p style="color:var(--muted);font-size:.75rem">No experience listed</p>';
+
+  const edH = (r.education||[]).map(e => `
+    <div class="tl-item edu">
+      <div class="tl-title">${e.degree||'Degree'}${e.field?' — '+e.field:''}</div>
+      <div class="tl-sub">🏫 ${e.institution||e.institute||'Unknown'}</div>
+      <div class="tl-date">🎓 ${e.graduation_date||'?'}${e.gpa?' · GPA: '+e.gpa:''}</div>
+    </div>`).join('') || '<p style="color:var(--muted);font-size:.75rem">No education listed</p>';
+
+  const prH = (r.projects||[]).map(p => `
+    <div class="proj-card">
+      <div class="proj-name">🚀 ${p.name||'Untitled'}</div>
+      <div class="proj-type">${p.type||''}</div>
+      ${p.description?`<div class="proj-desc">${p.description}</div>`:''}
+    </div>`).join('') || '<p style="color:var(--muted);font-size:.75rem">No projects listed</p>';
+
+  const acH = [
+    ...(r.achievements||[]).map(a=>`<div class="tl-item ach"><div class="tl-title">🏅 ${a.title||'Achievement'}</div>${a.platform?`<div class="tl-sub">${a.platform}</div>`:''}</div>`),
+    ...(r.certifications||[]).map(c=>`<div class="tl-item" style="border-left-color:var(--yellow)"><div class="tl-title">📜 ${c}</div></div>`),
+  ].join('') || '<p style="color:var(--muted);font-size:.75rem">No achievements</p>';
+
+  const links = [['🔗 LinkedIn',pi.linkedin],['⚙️ GitHub',pi.github],['💡 LeetCode',pi.leetcode],['⚡ Codeforces',pi.codeforces]].filter(([,u])=>u);
+
+  document.getElementById('resultsArea').innerHTML = `
+    <div class="res-tabs">
+      <div class="res-tab active" onclick="rt('contact',this)">👤 Contact</div>
+      <div class="res-tab" onclick="rt('summary',this)">📝 Summary</div>
+      <div class="res-tab" onclick="rt('skills',this)">🔍 Skills</div>
+      <div class="res-tab" onclick="rt('exp',this)">💼 Experience</div>
+      <div class="res-tab" onclick="rt('edu',this)">🎓 Education</div>
+      <div class="res-tab" onclick="rt('proj',this)">🚀 Projects</div>
+      <div class="res-tab" onclick="rt('ach',this)">🏆 Achievements</div>
+      <div class="res-tab" onclick="rt('json',this)">{ } JSON</div>
+    </div>
+    <div class="res-tab-content active" id="tc-contact">
+      <div class="info-grid">
+        <div class="info-cell"><label>👤 Name</label><span>${v(pi.full_name)}</span></div>
+        <div class="info-cell"><label>📧 Email</label><span>${v(pi.email)}</span></div>
+        <div class="info-cell"><label>📱 Phone</label><span>${v(pi.phone)}</span></div>
+        <div class="info-cell"><label>📍 Location</label><span>${v(pi.location)}</span></div>
+        ${links.map(([ic,u])=>`<div class="info-cell" style="grid-column:1/-1"><label>${ic}</label><a href="${u}" target="_blank">${u}</a></div>`).join('')}
+      </div>
+    </div>
+    <div class="res-tab-content" id="tc-summary"><div class="sum-box">${r.professional_summary||'<span style="color:var(--muted)">No summary.</span>'}</div></div>
+    <div class="res-tab-content" id="tc-skills">
+      <div style="margin-bottom:.6rem">
+        <div style="font-family:var(--mono);font-size:.6rem;color:var(--muted2);margin-bottom:.35rem">📋 ALL SKILLS</div>
+        <div class="skill-chips">${skH}</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.7rem;margin-top:.7rem">
+        <div><div style="font-family:var(--mono);font-size:.6rem;color:var(--green);margin-bottom:.35rem">✅ MATCHED</div><div class="skill-chips">${matchH}</div></div>
+        <div><div style="font-family:var(--mono);font-size:.6rem;color:var(--red);margin-bottom:.35rem">❌ MISSING</div><div class="skill-chips">${missH}</div></div>
+      </div>
+    </div>
+    <div class="res-tab-content" id="tc-exp"><div class="tl-list">${exH}</div></div>
+    <div class="res-tab-content" id="tc-edu"><div class="tl-list">${edH}</div></div>
+    <div class="res-tab-content" id="tc-proj"><div class="proj-grid">${prH}</div></div>
+    <div class="res-tab-content" id="tc-ach"><div class="tl-list">${acH}</div></div>
+    <div class="res-tab-content" id="tc-json">
+      <button class="copy-btn" onclick="cpJ()">📋 Copy JSON</button>
+      <div class="json-box" id="jbox">${JSON.stringify(data,null,2)}</div>
+    </div>
+    ${(data.errors||[]).length ? `<div class="err-bar">${data.errors.map(e=>`⚠ ${e}`).join('<br/>')}</div>` : ''}`;
+}
+
+function rt(id, el) {
+  document.querySelectorAll('.res-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.res-tab-content').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  const panel = document.getElementById(`tc-${id}`);
+  if(panel) panel.classList.add('active');
+}
+
+function cpJ() {
+  const jbox = document.getElementById('jbox');
+  if(!jbox) return;
+  navigator.clipboard.writeText(jbox.textContent)
+    .then(() => {
+      const b = document.querySelector('.copy-btn');
+      if(b) { b.textContent = '✅ Copied!'; setTimeout(() => b.textContent = '📋 Copy JSON', 2000); }
+      showToast('📋 JSON copied!');
+    })
+    .catch(() => showToast('⚠️ Failed to copy'));
+}
+
+/* ═══════════════════════════════════════════════════
+   MAIN PIPELINE RUNNER
+═══════════════════════════════════════════════════ */
+async function runPipeline() {
+  const file = document.getElementById('resumeFile').files[0];
+  const jT = document.getElementById('jobTitle').value.trim();
+  const jR = document.getElementById('jobRole').value.trim();
+  const jD = document.getElementById('jobDesc').value.trim();
+  const opp = document.getElementById('oppType').value;
+
+  if(!file) { showToast('⚠️ Upload a resume file'); return; }
+  if(!jT) { showToast('⚠️ Enter a title'); document.getElementById('jobTitle').focus(); return; }
+  if(!jR) { showToast('⚠️ Enter a role'); document.getElementById('jobRole').focus(); return; }
+  if(!jD) { showToast('⚠️ Enter a description'); document.getElementById('jobDesc').focus(); return; }
+  if(!validateFile(file)) return;
+
+  setLoading(true);
+  resetPipeline();
+  document.getElementById('resultsArea').innerHTML = '<div class="empty-state"><div class="empty-icon">⚙️</div><div class="empty-text">AI agents analyzing resume…<br/>This may take 30-60 seconds</div></div>';
+  document.getElementById('rightEmpty').style.display = 'flex';
+  document.getElementById('rightContent').style.display = 'none';
+
+  simulatePipeline(45000);
+
+  const form = new FormData();
+  form.append('resume', file);
+  form.append('job_title', jT);
+  form.append('job_role', jR);
+  form.append('job_description', jD);
+  form.append('opportunity_type', opp);
+  form.append('skills_required', document.getElementById('skills').value || '');
+  form.append('years_experience_required', opp === 'internship' ? '0' : (document.getElementById('yearsExp').value || '0'));
+  form.append('education_required', document.getElementById('eduReq').value || '');
+
+  const startTime = Date.now();
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 120000);
+    const res = await fetch('/api/score-resume', { method:'POST', body:form, signal: controller.signal });
+    clearTimeout(timeoutId);
+    const data = await res.json();
+
+    if(!res.ok) {
+      completePipeline(false);
+      document.getElementById('resultsArea').innerHTML = `<div class="err-bar">⚠️ ${data.detail||JSON.stringify(data)}</div>`;
+      showToast('❌ Analysis failed');
+      return;
+    }
+
+    completePipeline(true);
+    const elapsed = ((Date.now() - startTime)/1000).toFixed(1);
+    const fs = data.final_score;
+    setLog(`✅ Score: ${fs?.total_score?.toFixed(1)||'?'}/100 — ${fs?.breakdown?.label||''} · ${elapsed}s`, 'green');
+    renderResults(data);
+    renderRightPanel(data);
+    showToast('✅ Analysis complete!');
+
+  } catch(err) {
+    completePipeline(false);
+    if(err.name === 'AbortError') {
+      document.getElementById('resultsArea').innerHTML = '<div class="err-bar">⚠️ Request timed out (2 min)</div>';
+      showToast('⏰ Timed out');
+    } else {
+      document.getElementById('resultsArea').innerHTML = `<div class="err-bar">⚠️ Cannot connect to server on port 8000.<br/>${err.message}</div>`;
+      showToast('❌ Connection failed');
+    }
+  } finally {
+    setLoading(false);
+  }
+}
+
+document.addEventListener('keydown', (e) => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+    e.preventDefault();
+    runPipeline();
+  }
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,28 @@
+# Core
+langgraph
+langchain
+langchain-groq
+langchain-core
+
+# API server
+fastapi
+uvicorn
+python-multipart
+
+# File parsing
+pdfplumber
+python-docx
+pymupdf
+
+# Data validation
+pydantic
+pydantic-settings
+
+# Utils
+python-dotenv
+httpx
+numpy
+scikit-learn
+
+# Logging
+structlog

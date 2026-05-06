@@ -1,0 +1,55 @@
+# ── Environment ──────────────────────────────
+.env
+.env.local
+.env.*.local
+venv/
+venv
+vvenv
+vvenv/
+
+# ── Python ───────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+*.whl
+
+# ── Virtual environments ──────────────────────
+venv/
+.venv/
+env/
+.env/
+ENV/
+
+# ── Logs ─────────────────────────────────────
+logs/
+*.log
+
+# ── Uploads (temp resume files) ──────────────
+uploads/
+*.pdf
+*.docx
+*.doc
+
+# ── IDE / Editor ─────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# ── Testing ──────────────────────────────────
+.pytest_cache/
+.coverage
+htmlcov/
+
+# ── LangSmith / LangChain cache ──────────────
+.langchain/
+langchain.db
