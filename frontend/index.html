@@ -3,1321 +3,516 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-  <title>ResumeIQ — Agentic Scorer | AI-Powered Resume Analysis</title>
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+  <title>ResumeIQ — AI-Powered Resume Analysis</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600&family=JetBrains+Mono:wght@400;500;600&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
   <style>
-    /* ═══════════════════════════════════════════════
-       TOKENS & DESIGN SYSTEM
-    ═══════════════════════════════════════════════ */
     :root {
-      --bg:      #05060a;
-      --bg2:     #0c0d14;
-      --bg3:     #111320;
-      --border:  #1a1d2e;
-      --border2: #252840;
-      --accent:  #6366f1;
-      --accent-hover: #4f46e5;
-      --accent2: #22d3ee;
-      --orange:  #f97316;
-      --green:   #22c55e;
-      --yellow:  #eab308;
-      --red:     #ef4444;
-      --pink:    #ec4899;
-      --text:    #e8eaf0;
-      --muted:   #555870;
-      --muted2:  #8890b0;
-      --card:    #0e1018;
-      --glass:   rgba(14, 16, 24, 0.8);
-      --mono:    'Space Mono', monospace;
-      --sans:    'Space Grotesk', sans-serif;
-      
-      /* Animation */
-      --ease-out-expo: cubic-bezier(0.19, 1, 0.22, 1);
-      --ease-out-back: cubic-bezier(0.34, 1.56, 0.64, 1);
-      --transition-fast: 150ms;
-      --transition-normal: 250ms;
-      --transition-slow: 400ms;
+      --c-red:     #FF4433;
+      --c-teal:    #40E0D0;
+      --c-pink:    #FF5CAD;
+      --c-lavender:#DE8AFF;
+      --c-sky:     #5CC6FF;
+      --c-lime:    #EBFF8A;
+      --c-sage:    #DFEBCC;
+      --c-blush:   #F6C1DA;
+      --c-coral:   #FF8A8A;
+      --c-mauve:   #915F6D;
+      --c-violet:  #7F00FF;
+      --c-orange:  #FF8C42;
+
+      --accent-parser:      var(--c-teal);
+      --accent-skills:      var(--c-sky);
+      --accent-experience:  var(--c-coral);
+      --accent-education:   var(--c-lavender);
+      --accent-achievement: var(--c-lime);
+      --accent-social:      var(--c-pink);
+      --accent-project:     var(--c-orange);
+      --accent-final:       var(--c-violet);
+      --accent-done:        var(--c-teal);
+
+      --brand-a: var(--c-red);
+      --brand-b: var(--c-violet);
+
+      --ink:    #1A1C1E;
+      --ink2:   #2C2E32;
+      --muted:  #5F6268;
+      --muted2: #8A8F98;
+      --surface:#FFFFFF;
+      --bg:     #F8F9FA;
+      --bg2:    #F1F3F5;
+      --border: #E9EBED;
+      --border2:#D1D5DB;
+
+      --green:    #16A34A; --green-bg:  rgba(22,163,74,.08);  --green-bd:  rgba(22,163,74,.2);
+      --amber:    #B45309; --amber-bg:  rgba(180,83,9,.08);   --amber-bd:  rgba(180,83,9,.2);
+      --red:      #DC2626; --red-bg:    rgba(220,38,38,.08);  --red-bd:    rgba(220,38,38,.2);
+
+      --ff-sans:    'Inter', sans-serif;
+      --ff-mono:    'JetBrains Mono', monospace;
+      --ff-display: 'Outfit', sans-serif;
+      --radius:    10px;
+      --radius-sm:  7px;
+      --radius-lg: 14px;
+      --radius-xl: 99px;
     }
 
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+    html, body { height:100%; font-family:var(--ff-sans); background:var(--bg); color:var(--ink); font-size:14px; line-height:1.5; overflow:hidden; }
 
-    html, body {
-      height: 100%;
-      background: var(--bg);
-      color: var(--text);
-      font-family: var(--sans);
-      overflow: hidden;
-      scroll-behavior: smooth;
-    }
-
-    /* ── Enhanced noise grain overlay ── */
-    body::after {
-      content: '';
-      position: fixed; inset: 0;
-      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
-      pointer-events: none; z-index: 9999; opacity: .4;
-      mix-blend-mode: overlay;
-    }
-
-    /* ── Custom Scrollbar ── */
-    ::-webkit-scrollbar { width: 6px; height: 6px; }
-    ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
-    ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
-
-    /* ═══════════════════════════════════════════════
-       APP SHELL — Fixed layout with no overlap
-    ═══════════════════════════════════════════════ */
     .shell {
-      display: grid;
-      grid-template-columns: 340px 1fr 380px;
-      grid-template-rows: 56px 1fr;
-      height: 100vh;
-      width: 100vw;
-      gap: 0;
-      position: relative;
+      display:grid;
+      grid-template-columns: 300px 1fr 340px;
+      grid-template-rows: 48px 1fr;
+      height:100vh;
     }
 
-    /* ── Top bar ── */
+    /* ── Topbar ── */
     .topbar {
       grid-column: 1 / -1;
-      grid-row: 1;
-      display: flex;
-      align-items: center;
-      padding: 0 1.5rem;
-      border-bottom: 1px solid var(--border);
-      background: rgba(12, 13, 20, 0.95);
-      backdrop-filter: blur(10px);
-      gap: 1rem;
-      z-index: 100;
-      min-height: 56px;
+      display:flex; align-items:center; gap:.75rem;
+      padding:0 1rem; background:var(--surface);
+      border-bottom:1px solid var(--border);
+      height:48px;
     }
-    .topbar-logo {
-      font-family: var(--mono);
-      font-size: .85rem;
-      font-weight: 700;
-      letter-spacing: .1em;
-      background: linear-gradient(135deg, var(--accent), var(--accent2));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-    .topbar-logo span { 
-      background: linear-gradient(135deg, var(--accent2), #a78bfa);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-    .topbar-sep { flex: 1; }
-    .topbar-tag {
-      font-family: var(--mono);
-      font-size: .6rem;
-      letter-spacing: .1em;
-      color: var(--muted2);
-      padding: 4px 12px;
-      border: 1px solid var(--border2);
-      border-radius: 6px;
-      transition: all var(--transition-fast);
-      white-space: nowrap;
-    }
-    .topbar-tag.active-job    { 
-      border-color: rgba(99,102,241,.4); 
-      color: #a5b4fc; 
-      background: rgba(99,102,241,.08);
-    }
-    .topbar-tag.active-intern { 
-      border-color: rgba(249,115,22,.35); 
-      color: var(--orange); 
-      background: rgba(249,115,22,.08);
-    }
-    .version-dot { 
-      width: 8px; height: 8px; 
-      border-radius: 50%; 
-      background: var(--green); 
-      box-shadow: 0 0 12px var(--green);
-      animation: pulse-dot 2s ease-in-out infinite;
-      flex-shrink: 0;
-    }
-    @keyframes pulse-dot {
-      0%, 100% { box-shadow: 0 0 8px var(--green); }
-      50% { box-shadow: 0 0 20px var(--green), 0 0 30px rgba(34,197,94,.3); }
-    }
-    .tooltip {
-      position: relative;
-      display: inline-flex;
-      align-items: center;
-      cursor: help;
-    }
-    .tooltip::after {
-      content: attr(data-tip);
-      position: absolute;
-      bottom: calc(100% + 8px);
-      left: 50%;
-      transform: translateX(-50%) translateY(4px);
-      background: var(--bg3);
-      border: 1px solid var(--border2);
-      padding: 6px 10px;
-      border-radius: 6px;
-      font-size: .6rem;
-      color: var(--text);
-      white-space: nowrap;
-      opacity: 0;
-      pointer-events: none;
-      transition: all var(--transition-fast);
-      z-index: 10;
-    }
-    .tooltip:hover::after {
-      opacity: 1;
-      transform: translateX(-50%) translateY(0);
-    }
+    .topbar-wordmark { display:flex; align-items:baseline; gap:1px; user-select:none; }
+    .wordmark-resume { font-family:var(--ff-display); font-size:1.05rem; font-weight:800; color:var(--ink); letter-spacing:-.04em; }
+    .wordmark-iq     { font-family:var(--ff-display); font-size:1.05rem; font-weight:900; color:var(--c-red); letter-spacing:-.04em; }
+    .topbar-divider  { width:1px; height:22px; background:var(--border); margin:0 .25rem; }
+    .topbar-badge    { display:flex; align-items:center; gap:.4rem; font-family:var(--ff-mono); font-size:.6rem; color:var(--muted); padding:3px 8px; background:var(--bg); border:1px solid var(--border); border-radius:var(--radius-xl); }
+    .rainbow-dot { width:6px; height:6px; border-radius:50%; background: linear-gradient(135deg,var(--c-red),var(--c-violet)); }
+    .palette-strip { display:flex; gap:3px; margin-left:.3rem; }
+    .pswatch { width:9px; height:9px; border-radius:2px; cursor:default; }
+    .topbar-sep { flex:1; }
+    .mode-pill { display:flex; align-items:center; gap:.35rem; font-family:var(--ff-mono); font-size:.6rem; font-weight:600; padding:4px 10px; border-radius:var(--radius-xl); }
+    .mode-pill.job    { background:rgba(92,198,255,.12); color:#0075a8; border:1px solid rgba(92,198,255,.3); }
+    .mode-pill.intern { background:rgba(255,138,138,.12); color:#c0392b; border:1px solid rgba(255,138,138,.3); }
+    .status-dot { width:7px; height:7px; border-radius:50%; background:var(--green); margin-left:.2rem; box-shadow:0 0 0 2px rgba(22,163,74,.2); }
 
-    /* ── Left panel — Form ── */
-    .panel-left {
-      grid-column: 1;
-      grid-row: 2;
-      border-right: 1px solid var(--border);
-      background: var(--bg2);
-      overflow-y: auto;
-      overflow-x: hidden;
-      padding: 1.2rem;
-      height: 100%;
-    }
+    /* ── Panels ── */
+    .panel-left   { grid-column:1; grid-row:2; overflow-y:auto; padding:.85rem .9rem; border-right:1px solid var(--border); display:flex; flex-direction:column; gap:.55rem; }
+    .panel-center { grid-column:2; grid-row:2; overflow-y:auto; padding:.85rem .95rem; display:flex; flex-direction:column; gap:.6rem; }
+    .panel-right  { grid-column:3; grid-row:2; overflow-y:auto; padding:.85rem .9rem; border-left:1px solid var(--border); display:flex; flex-direction:column; gap:.55rem; }
 
-    /* ── Center panel — Pipeline + Results ── */
-    .panel-center {
-      grid-column: 2;
-      grid-row: 2;
-      overflow-y: auto;
-      overflow-x: hidden;
-      background: var(--bg);
-      display: flex;
-      flex-direction: column;
-      height: 100%;
-    }
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar { width:4px; } ::-webkit-scrollbar-track { background:transparent; } ::-webkit-scrollbar-thumb { background:var(--border2); border-radius:4px; }
 
-    /* ── Right panel — Score + breakdown ── */
-    .panel-right {
-      grid-column: 3;
-      grid-row: 2;
-      border-left: 1px solid var(--border);
-      background: var(--bg2);
-      overflow-y: auto;
-      overflow-x: hidden;
-      padding: 1.2rem;
-      height: 100%;
-    }
+    /* ── Form elements ── */
+    .section-label { display:flex; align-items:center; gap:.38rem; font-family:var(--ff-mono); font-size:.57rem; font-weight:600; text-transform:uppercase; letter-spacing:.08em; color:var(--muted2); margin-top:.1rem; }
+    .opp-toggle { display:grid; grid-template-columns:1fr 1fr; gap:.3rem; }
+    .opp-btn { display:flex; align-items:center; justify-content:center; gap:.35rem; padding:.48rem; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--surface); cursor:pointer; font-family:var(--ff-sans); font-size:.7rem; font-weight:500; color:var(--muted); transition:all .15s; }
+    .opp-btn:hover { border-color:var(--border2); color:var(--ink); }
+    .opp-btn.active-job    { background:rgba(92,198,255,.1); border-color:rgba(92,198,255,.4); color:#0075a8; }
+    .opp-btn.active-intern { background:rgba(255,138,138,.1); border-color:rgba(255,138,138,.4); color:#c0392b; }
 
-    /* ═══════════════════════════════════════════════
-       FORM ELEMENTS
-    ═══════════════════════════════════════════════ */
-    .section-label {
-      font-family: var(--mono);
-      font-size: .6rem;
-      letter-spacing: .14em;
-      text-transform: uppercase;
-      color: var(--muted);
-      margin-bottom: .6rem;
-      display: flex; 
-      align-items: center; 
-      gap: .5rem;
-    }
-    .section-label::before {
-      content: '';
-      display: block;
-      width: 3px; 
-      height: 12px;
-      background: linear-gradient(180deg, var(--accent), var(--accent2));
-      border-radius: 2px;
-      flex-shrink: 0;
-    }
+    .intern-note-bar { display:none; background:rgba(255,138,138,.08); border:1px solid rgba(255,138,138,.25); border-radius:var(--radius-sm); padding:.42rem .62rem; font-size:.65rem; color:#c0392b; align-items:center; gap:.4rem; }
+    .intern-note-bar.show { display:flex; }
 
-    .opp-toggle { 
-      display: grid; 
-      grid-template-columns: 1fr 1fr; 
-      gap: .5rem; 
-      margin-bottom: 1.2rem;
-      padding: 4px;
-      background: var(--bg3);
-      border-radius: 8px;
+    .form-group { display:flex; flex-direction:column; gap:.28rem; }
+    .form-label { display:flex; align-items:center; gap:.3rem; font-family:var(--ff-mono); font-size:.58rem; font-weight:600; color:var(--muted2); letter-spacing:.04em; }
+    .req { color:var(--c-red); }
+    input[type=text], input[type=number], textarea {
+      width:100%; padding:.48rem .62rem; border:1px solid var(--border); border-radius:var(--radius-sm);
+      font-family:var(--ff-sans); font-size:.75rem; color:var(--ink); background:var(--surface);
+      outline:none; transition:border-color .15s, box-shadow .15s; resize:none;
     }
-    .opp-btn {
-      padding: .6rem .5rem;
-      border-radius: 6px;
-      border: 1px solid transparent;
-      background: transparent;
-      color: var(--muted2);
-      font-family: var(--mono);
-      font-size: .72rem;
-      cursor: pointer;
-      transition: all var(--transition-normal) var(--ease-out-expo);
-      text-align: center;
-      font-weight: 500;
-    }
-    .opp-btn:hover { color: var(--text); }
-    .opp-btn.active-job { 
-      border-color: var(--accent); 
-      background: rgba(99,102,241,.12); 
-      color: #c7d2fe; 
-    }
-    .opp-btn.active-intern { 
-      border-color: var(--orange); 
-      background: rgba(249,115,22,.1);  
-      color: var(--orange); 
-    }
+    input:focus, textarea:focus { border-color:var(--c-violet); box-shadow:0 0 0 3px rgba(127,0,255,.07); }
+    textarea { line-height:1.55; }
+    .years-wrap { transition:opacity .2s; }
+    .years-wrap.dim { opacity:.4; pointer-events:none; }
 
-    .form-group { margin-bottom: .8rem; }
-    .form-label {
-      display: block;
-      font-family: var(--mono);
-      font-size: .62rem;
-      color: var(--muted2);
-      margin-bottom: .3rem;
-      letter-spacing: .05em;
-    }
-    input, textarea, select {
-      width: 100%;
-      background: var(--bg3);
-      border: 1px solid var(--border2);
-      border-radius: 8px;
-      padding: .55rem .75rem;
-      color: var(--text);
-      font-family: var(--mono);
-      font-size: .75rem;
-      outline: none;
-      transition: all var(--transition-fast);
-      resize: vertical;
-    }
-    input:hover, textarea:hover { border-color: var(--muted); }
-    input:focus, textarea:focus { 
-      border-color: var(--accent); 
-      box-shadow: 0 0 0 3px rgba(99,102,241,.1);
-    }
-    textarea { min-height: 60px; line-height: 1.5; }
-
-    .dropzone {
-      border: 2px dashed var(--border2);
-      border-radius: 12px;
-      padding: 1.2rem;
-      text-align: center;
-      cursor: pointer;
-      background: var(--bg3);
-      position: relative;
-      transition: all var(--transition-normal) var(--ease-out-expo);
-      margin-bottom: .8rem;
-    }
-    .dropzone:hover, .dropzone.drag { 
-      border-color: var(--accent); 
-      background: rgba(99,102,241,.06);
-      transform: translateY(-2px);
-    }
-    .dropzone input[type="file"] { 
-      position: absolute; 
-      inset: 0; 
-      opacity: 0; 
-      cursor: pointer; 
-      width: 100%; 
-      height: 100%; 
-    }
-    .dz-icon { font-size: 1.6rem; margin-bottom: .3rem; }
-    .dz-text { font-size: .7rem; color: var(--muted2); font-family: var(--mono); line-height: 1.6; }
-    .dz-text strong { color: #a5b4fc; }
-    .dz-file { 
-      font-size: .65rem; 
-      color: var(--green); 
-      font-family: var(--mono); 
-      margin-top: .35rem;
-      padding: 4px 12px;
-      background: rgba(34,197,94,.1);
-      border-radius: 4px;
-      display: inline-block;
-    }
+    .divider { border:none; border-top:1px solid var(--border); margin:.2rem 0; }
 
     .btn-run {
-      width: 100%;
-      padding: .8rem;
-      border: none;
-      border-radius: 10px;
-      background: linear-gradient(135deg, var(--accent), #4f46e5);
-      color: #fff;
-      font-family: var(--sans);
-      font-weight: 600;
-      font-size: .85rem;
-      cursor: pointer;
-      margin-top: .5rem;
-      transition: all var(--transition-normal) var(--ease-out-expo);
-      display: flex; 
-      align-items: center; 
-      justify-content: center; 
-      gap: .5rem;
-      position: relative; 
-      overflow: hidden;
+      width:100%; padding:.6rem; border:none; border-radius:var(--radius-sm); cursor:pointer;
+      background: linear-gradient(135deg, var(--c-red), var(--c-violet));
+      color:#fff; font-family:var(--ff-display); font-size:.82rem; font-weight:700;
+      display:flex; align-items:center; justify-content:center; gap:.45rem;
+      transition:opacity .15s, transform .1s; position:relative;
     }
-    .btn-run::before {
-      content: '';
-      position: absolute; 
-      inset: 0;
-      background: linear-gradient(90deg, transparent, rgba(255,255,255,.1), transparent);
-      transform: translateX(-100%);
-      transition: transform .8s;
-    }
-    .btn-run:hover:not(:disabled)::before { transform: translateX(100%); }
-    .btn-run:hover:not(:disabled) { 
-      transform: translateY(-2px);
-      box-shadow: 0 8px 24px rgba(99,102,241,.3);
-    }
-    .btn-run:active:not(:disabled) { transform: translateY(0); }
-    .btn-run.intern { 
-      background: linear-gradient(135deg, var(--orange), #ea580c);
-    }
-    .btn-run:disabled { 
-      opacity: .5; 
-      cursor: not-allowed; 
-      transform: none;
-    }
-    .spinner {
-      width: 14px; 
-      height: 14px;
-      border: 2px solid rgba(255,255,255,.3);
-      border-top-color: #fff;
-      border-radius: 50%;
-      animation: spin .7s linear infinite;
-      display: none;
-    }
-    .btn-run.loading .spinner { display: block; }
-    @keyframes spin { to { transform: rotate(360deg); } }
+    .btn-run:hover:not(:disabled) { opacity:.92; transform:translateY(-1px); }
+    .btn-run:disabled { opacity:.6; cursor:not-allowed; transform:none; }
+    .btn-run.loading::after { content:''; position:absolute; inset:0; background:rgba(0,0,0,.05); border-radius:inherit; }
+    .spinner { width:14px; height:14px; border:2px solid rgba(255,255,255,.3); border-top-color:#fff; border-radius:50%; animation:spin .7s linear infinite; display:none; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+    .kbd-hint { text-align:center; font-family:var(--ff-mono); font-size:.55rem; color:var(--muted2); }
+    .kbd { display:inline-block; padding:1px 5px; border:1px solid var(--border2); border-radius:3px; font-size:.55rem; }
 
-    .divider { border: none; border-top: 1px solid var(--border); margin: 1rem 0; }
-    .years-wrap { transition: all var(--transition-normal); }
-    .years-wrap.dim { opacity: .3; pointer-events: none; filter: blur(1px); }
+    /* ── Dropzone ── */
+    .dropzone {
+      border:1.5px dashed var(--border2); border-radius:var(--radius); padding:.9rem .8rem;
+      display:flex; flex-direction:column; align-items:center; gap:.3rem;
+      cursor:pointer; transition:border-color .15s, background .15s; text-align:center;
+    }
+    .dropzone:hover, .dropzone.drag { border-color:var(--c-violet); background:rgba(127,0,255,.03); }
+    .dropzone input[type=file] { display:none; }
+    .dz-icon-wrap { width:32px; height:32px; border-radius:50%; background:var(--bg); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; }
+    .dz-icon-wrap i { font-size:1rem; color:var(--muted2); }
+    .dz-text-main { font-size:.73rem; font-weight:500; color:var(--ink2); }
+    .dz-text-sub  { font-family:var(--ff-mono); font-size:.58rem; color:var(--muted2); }
+    .dz-file { display:inline-flex; align-items:center; gap:.35rem; font-family:var(--ff-mono); font-size:.63rem; color:var(--green); font-weight:500; }
 
-    .intern-note-bar {
-      background: rgba(249,115,22,.06); 
-      border: 1px solid rgba(249,115,22,.2);
-      border-radius: 6px; 
-      padding: .4rem .6rem; 
-      margin-bottom: .7rem;
-      font-family: var(--mono); 
-      font-size: .62rem; 
-      color: var(--orange); 
-      display: none;
-      transition: all var(--transition-normal);
+    /* ── Step tiles ── */
+    .steps-grid {
+      display:grid; grid-template-columns: repeat(9, 1fr); gap:.32rem;
     }
-    .intern-note-bar.show { display: block; }
+    .step-tile {
+      display:flex; flex-direction:column; align-items:center; justify-content:center;
+      padding:.52rem .28rem .44rem; background:var(--surface); border:1px solid var(--border);
+      border-radius:var(--radius-sm); font-family:var(--ff-mono); font-size:.48rem;
+      color:var(--muted2); gap:.28rem; text-align:center; transition:all .25s; position:relative;
+    }
+    .step-tile i { font-size:.85rem; }
+    .step-tile.running { background: rgba(127,0,255,.06); border-color:var(--c-violet); color:var(--c-violet); box-shadow:0 0 0 3px rgba(127,0,255,.07); }
+    .step-tile.running i { animation:pulse .9s ease-in-out infinite; }
+    .step-tile.done { background:rgba(22,163,74,.05); border-color:rgba(22,163,74,.25); color:var(--green); }
+    .step-check { position:absolute; top:3px; right:3px; width:10px; height:10px; border-radius:50%; background:var(--green); display:flex; align-items:center; justify-content:center; opacity:0; transition:opacity .2s; }
+    .step-tile.done .step-check { opacity:1; }
+    .step-tile-text { line-height:1.3; }
+    @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.6;transform:scale(.92)} }
 
-    /* ═══════════════════════════════════════════════
-       VERTICAL PIPELINE VISUALIZER
-    ═══════════════════════════════════════════════ */
-    .pipeline-area {
-      padding: 1rem 1.5rem 0;
-      flex-shrink: 0;
+    /* ── Status bar ── */
+    .status-bar {
+      display:flex; align-items:center; gap:.5rem; padding:.42rem .72rem;
+      background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-sm);
+      font-family:var(--ff-mono); font-size:.6rem;
     }
+    .status-bar-dot { width:6px; height:6px; border-radius:50%; background:var(--muted2); flex-shrink:0; }
+    .status-bar-dot.running { background:var(--c-violet); box-shadow:0 0 0 3px rgba(127,0,255,.2); animation:pulse .9s ease-in-out infinite; }
+    .status-bar-dot.done  { background:var(--green); }
+    .status-bar-dot.error { background:var(--red); }
+    .status-bar-text { flex:1; color:var(--muted); transition:opacity .15s; }
+    .status-bar-time { color:var(--muted2); margin-left:auto; }
 
-    .pipeline-header {
-      display: flex; 
-      align-items: center; 
-      gap: .6rem;
-      margin-bottom: 1rem;
-      padding: .7rem 1rem;
-      background: var(--bg3);
-      border-radius: 10px;
-      border: 1px solid var(--border);
-    }
-    .pipeline-title {
-      font-family: var(--mono);
-      font-size: .63rem;
-      letter-spacing: .14em;
-      text-transform: uppercase;
-      color: var(--muted2);
-    }
-    .pipeline-status-text {
-      font-family: var(--mono);
-      font-size: .63rem;
-      color: var(--muted);
-      margin-left: auto;
-      padding: 4px 10px;
-      border-radius: 4px;
-      background: var(--bg2);
-    }
-    .pipeline-status-text.running { color: var(--accent2); }
-    .pipeline-status-text.done    { color: var(--green); }
-    .pipeline-status-text.error   { color: var(--red); }
+    /* ── Results area ── */
+    .results-area { flex:1; }
+    .empty-state { display:flex; flex-direction:column; align-items:center; justify-content:center; padding:3rem 1rem; gap:.7rem; }
+    .empty-icon-wrap { position:relative; }
+    .empty-icon-inner { width:54px; height:54px; border-radius:50%; background:var(--bg); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; }
+    .empty-icon-inner i { font-size:1.4rem; color:var(--muted2); }
+    .empty-heading { font-family:var(--ff-display); font-size:.92rem; font-weight:700; color:var(--ink2); }
+    .empty-sub { font-size:.7rem; color:var(--muted2); text-align:center; max-width:280px; line-height:1.65; }
 
-    /* Vertical graph container */
-    .pipeline-graph-vertical {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 0;
-      padding: 1rem 0.5rem;
-      background: var(--bg3);
-      border-radius: 14px;
-      border: 1px solid var(--border);
-      max-height: 500px;
-      overflow-y: auto;
-      overflow-x: hidden;
-    }
+    /* Tabs */
+    .res-tabs { display:flex; gap:.2rem; flex-wrap:wrap; padding-bottom:.5rem; border-bottom:1px solid var(--border); margin-bottom:.65rem; }
+    .res-tab { display:flex; align-items:center; gap:.3rem; padding:.3rem .65rem; border-radius:var(--radius-xl); font-family:var(--ff-mono); font-size:.58rem; font-weight:500; color:var(--muted); cursor:pointer; transition:all .15s; border:1px solid transparent; }
+    .res-tab:hover { color:var(--ink); background:var(--bg); }
+    .res-tab.active { background:var(--ink); color:#fff; border-color:var(--ink); }
+    .res-tab-content { display:none; }
+    .res-tab-content.active { display:block; }
 
-    /* Vertical node */
-    .p-node-v {
-      display: flex;
-      align-items: center;
-      gap: .8rem;
-      width: 100%;
-      position: relative;
-      padding: 0 1rem;
-    }
-    .p-node-box-v {
-      width: 200px;
-      height: 56px;
-      border-radius: 10px;
-      border: 2px solid var(--border2);
-      background: var(--bg2);
-      display: flex;
-      align-items: center;
-      gap: .7rem;
-      padding: 0 .8rem;
-      position: relative;
-      transition: all var(--transition-normal) var(--ease-out-expo);
-      cursor: pointer;
-      flex-shrink: 0;
-    }
-    .p-node-box-v:hover {
-      transform: translateX(4px);
-      border-color: var(--muted);
-    }
-    .p-node-icon-v { 
-      font-size: 1.3rem; 
-      flex-shrink: 0;
-      transition: all var(--transition-normal); 
-    }
-    .p-node-content-v {
-      display: flex;
-      flex-direction: column;
-      gap: .15rem;
-      min-width: 0;
-    }
-    .p-node-label-v {
-      font-family: var(--mono);
-      font-size: .55rem;
-      color: var(--muted);
-      line-height: 1.2;
-      letter-spacing: .04em;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .p-node-step-v {
-      font-family: var(--mono);
-      font-size: .5rem;
-      color: var(--muted2);
-      letter-spacing: .06em;
-      margin-left: auto;
-      flex-shrink: 0;
-    }
+    .info-grid { display:grid; grid-template-columns:1fr 1fr; gap:.42rem; }
+    .info-cell { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-sm); padding:.52rem .65rem; }
+    .info-cell label { display:flex; align-items:center; gap:.28rem; font-family:var(--ff-mono); font-size:.56rem; color:var(--muted2); font-weight:600; letter-spacing:.04em; text-transform:uppercase; margin-bottom:.18rem; }
+    .info-cell span, .info-cell a { font-size:.73rem; color:var(--ink); word-break:break-all; }
+    .info-cell a { color:var(--c-sky); text-decoration:none; }
+    .info-cell a:hover { text-decoration:underline; }
 
-    /* Vertical node states */
-    .p-node-box-v.pending  { border-color: var(--border2); background: var(--bg2); }
-    .p-node-box-v.running  {
-      border-color: var(--accent2);
-      background: rgba(34,211,238,.08);
-      box-shadow: 0 0 20px rgba(34,211,238,.2), inset 0 0 12px rgba(34,211,238,.04);
-      animation: nodeGlowV 1.2s ease-in-out infinite alternate;
-    }
-    .p-node-box-v.running .p-node-label-v { color: var(--accent2); }
-    .p-node-box-v.running .p-node-icon-v  { 
-      animation: nodePulseV 1s ease-in-out infinite alternate;
-      filter: drop-shadow(0 0 6px var(--accent2));
-    }
-    .p-node-box-v.done {
-      border-color: var(--green);
-      background: rgba(34,197,94,.08);
-      box-shadow: 0 0 12px rgba(34,197,94,.15);
-    }
-    .p-node-box-v.done .p-node-label-v { color: var(--green); }
-    .p-node-box-v.error {
-      border-color: var(--red);
-      background: rgba(239,68,68,.08);
-      box-shadow: 0 0 12px rgba(239,68,68,.15);
-    }
-    .p-node-box-v.error .p-node-label-v { color: var(--red); }
+    .skill-chips { display:flex; flex-wrap:wrap; gap:.3rem; }
+    .chip { font-family:var(--ff-mono); font-size:.6rem; padding:2px 8px; border-radius:var(--radius-xl); border:1px solid; }
+    .chip-m { background:rgba(22,163,74,.08); border-color:rgba(22,163,74,.3); color:var(--green); }
+    .chip-d { background:var(--bg); border-color:var(--border); color:var(--muted); }
+    .chip-x { background:rgba(220,38,38,.07); border-color:rgba(220,38,38,.25); color:var(--red); }
+    .chip-p { background:rgba(255,140,66,.1); border-color:rgba(255,140,66,.35); color:#c05a00; }
 
-    @keyframes nodeGlowV {
-      from { box-shadow: 0 0 10px rgba(34,211,238,.15), inset 0 0 8px rgba(34,211,238,.03); }
-      to   { box-shadow: 0 0 24px rgba(34,211,238,.35), inset 0 0 16px rgba(34,211,238,.08); }
-    }
-    @keyframes nodePulseV {
-      from { transform: scale(1); }
-      to   { transform: scale(1.15); }
-    }
+    /* Tier badge */
+    .tier-badge { display:inline-flex; align-items:center; gap:.22rem; font-family:var(--ff-mono); font-size:.5rem; font-weight:600; padding:1px 6px; border-radius:var(--radius-xl); border:1px solid; }
+    .tier-1 { background:rgba(22,163,74,.08); border-color:rgba(22,163,74,.3); color:var(--green); }
+    .tier-2 { background:rgba(180,83,9,.07); border-color:rgba(180,83,9,.25); color:var(--amber); }
+    .tier-3 { background:var(--bg2); border-color:var(--border2); color:var(--muted2); }
 
-    /* Tick badge */
-    .p-node-tick-v {
-      position: absolute;
-      top: -6px; 
-      right: -6px;
-      width: 18px; 
-      height: 18px;
-      background: var(--green);
-      border-radius: 50%;
-      display: none;
-      align-items: center; 
-      justify-content: center;
-      font-size: .55rem;
-      color: #000;
-      font-weight: 700;
-      box-shadow: 0 0 12px var(--green);
-      animation: popIn .4s var(--ease-out-back);
-      z-index: 2;
-    }
-    .p-node-box-v.done .p-node-tick-v { display: flex; }
-    @keyframes popIn {
-      from { transform: scale(0) rotate(-45deg); opacity: 0; }
-      to   { transform: scale(1) rotate(0deg); opacity: 1; }
-    }
+    .tl-list { display:flex; flex-direction:column; gap:.4rem; }
+    .tl-item { padding:.62rem .78rem; background:var(--surface); border:1px solid var(--border); border-left:3px solid var(--c-coral); border-radius:var(--radius-sm); }
+    .tl-item.edu { border-left-color:var(--c-lavender); }
+    .tl-item.ach { border-left-color:var(--c-lime); }
+    .tl-title  { font-weight:600; font-size:.78rem; color:var(--ink); }
+    .tl-sub    { font-size:.7rem; color:var(--muted); margin-top:.1rem; display:flex; align-items:center; gap:.4rem; flex-wrap:wrap; }
+    .tl-date   { font-family:var(--ff-mono); font-size:.58rem; color:var(--muted2); margin-top:.18rem; display:flex; align-items:center; gap:.3rem; }
+    .tl-desc   { font-size:.7rem; color:var(--muted); margin-top:.3rem; line-height:1.65; }
 
-    /* Vertical connector */
-    .p-connector-v {
-      width: 2px;
-      height: 24px;
-      position: relative;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-      margin-left: 100px;
-    }
-    .p-connector-line-v {
-      width: 2px;
-      height: 100%;
-      background: var(--border2);
-      position: absolute;
-      border-radius: 1px;
-      transition: all var(--transition-slow);
-    }
-    .p-connector-v.lit .p-connector-line-v {
-      background: linear-gradient(180deg, var(--green), var(--accent2));
-      box-shadow: 0 0 10px var(--accent2);
-    }
-    .p-connector-v.flowing .p-connector-line-v {
-      background: linear-gradient(180deg, var(--green), var(--accent2));
-      animation: connectorPulseV .8s ease-in-out infinite;
-    }
-    @keyframes connectorPulseV {
-      0%, 100% { opacity: 1; }
-      50% { opacity: .6; }
-    }
+    .proj-grid { display:grid; gap:.5rem; }
+    .proj-card { padding:.72rem .88rem; background:var(--surface); border:1px solid var(--border); border-left:3px solid var(--c-orange); border-radius:var(--radius-sm); }
+    .proj-name { font-weight:600; font-size:.8rem; color:var(--ink); display:flex; align-items:center; gap:.4rem; flex-wrap:wrap; }
+    .proj-type { font-family:var(--ff-mono); font-size:.58rem; color:#c05a00; margin-top:.1rem; }
+    .proj-desc { font-size:.7rem; color:var(--muted); margin-top:.28rem; line-height:1.65; }
+    .proj-techs { display:flex; flex-wrap:wrap; gap:.25rem; margin-top:.38rem; }
 
-    .p-connector-bolt-v {
-      position: absolute;
-      font-size: .9rem;
-      opacity: 0;
-      transition: opacity var(--transition-fast);
-      filter: drop-shadow(0 0 8px var(--accent2));
-      animation: boltFlashV .7s ease-in-out infinite;
-    }
-    .p-connector-v.flowing .p-connector-bolt-v { opacity: 1; }
-    @keyframes boltFlashV {
-      0%,100% { opacity: .2; transform: scale(.85); }
-      50%      { opacity: 1;  transform: scale(1.15); }
-    }
+    /* Project score panel */
+    .proj-score-panel { background:var(--bg); border:1px solid var(--border); border-radius:var(--radius-sm); padding:.65rem .82rem; margin-bottom:.65rem; display:flex; flex-direction:column; gap:.38rem; }
+    .proj-score-hdr { display:flex; align-items:center; justify-content:space-between; }
+    .proj-score-title { font-family:var(--ff-mono); font-size:.57rem; font-weight:600; text-transform:uppercase; letter-spacing:.07em; color:var(--muted2); }
+    .proj-score-val { font-family:var(--ff-display); font-size:1.3rem; font-weight:800; letter-spacing:-.04em; }
+    .proj-sub-scores { display:grid; grid-template-columns:1fr 1fr; gap:.32rem; }
+    .proj-sub-item { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-sm); padding:.38rem .52rem; }
+    .proj-sub-lbl { font-family:var(--ff-mono); font-size:.5rem; color:var(--muted2); font-weight:600; text-transform:uppercase; letter-spacing:.06em; }
+    .proj-sub-val { font-family:var(--ff-display); font-size:.85rem; font-weight:700; margin-top:.08rem; }
 
-    .p-connector-packet-v {
-      position: absolute;
-      width: 8px; 
-      height: 8px;
-      border-radius: 50%;
-      background: var(--accent2);
-      box-shadow: 0 0 12px var(--accent2);
-      left: 50%;
-      transform: translateX(-50%);
-      animation: packetFlowV .6s linear infinite;
-      display: none;
-    }
-    .p-connector-v.flowing .p-connector-packet-v { display: block; }
-    @keyframes packetFlowV {
-      from { top: -4px; opacity: 0; }
-      50%  { opacity: 1; }
-      to   { top: calc(100% + 4px); opacity: 0; }
-    }
+    .json-box { background:var(--ink); color:#94a3b8; border-radius:var(--radius); padding:.9rem; font-family:var(--ff-mono); font-size:.62rem; overflow:auto; max-height:360px; line-height:1.7; white-space:pre-wrap; word-break:break-all; }
+    .copy-btn { display:inline-flex; align-items:center; gap:.35rem; padding:5px 12px; background:var(--bg); border:1px solid var(--border); border-radius:var(--radius-sm); cursor:pointer; font-family:var(--ff-mono); font-size:.62rem; color:var(--muted); transition:all .15s; margin-bottom:.5rem; }
+    .copy-btn:hover { color:var(--ink); border-color:var(--c-violet); }
 
-    /* Start/End nodes */
-    .p-node-start-v, .p-node-end-v {
-      width: 200px;
-      height: 40px;
-      border-radius: 20px;
-      border: 2px solid var(--border2);
-      background: var(--bg2);
-      display: flex; 
-      align-items: center; 
-      justify-content: center;
-      font-family: var(--mono);
-      font-size: .55rem;
-      color: var(--muted);
-      letter-spacing: .05em;
-      font-weight: 700;
-      transition: all var(--transition-normal);
-      flex-shrink: 0;
-    }
-    .p-node-end-v.lit {
-      border-color: var(--green);
-      background: rgba(34,197,94,.12);
-      color: var(--green);
-      box-shadow: 0 0 20px rgba(34,197,94,.4);
-      animation: endGlowV 1.5s ease-in-out infinite;
-    }
-    @keyframes endGlowV {
-      0%, 100% { box-shadow: 0 0 16px rgba(34,197,94,.3); }
-      50% { box-shadow: 0 0 32px rgba(34,197,94,.6); }
-    }
+    .sum-box { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-sm); padding:.82rem .95rem; font-size:.78rem; line-height:1.75; color:var(--ink2); }
 
-    /* Log ticker */
-    .pipeline-log {
-      padding: .6rem 1.5rem;
-      font-family: var(--mono);
-      font-size: .62rem;
-      color: var(--muted2);
-      min-height: 24px;
-      display: flex; 
-      align-items: center; 
-      gap: .6rem;
-      border-bottom: 1px solid var(--border);
-      background: var(--bg2);
-      flex-shrink: 0;
-    }
-    .log-dot { 
-      width: 6px; 
-      height: 6px; 
-      border-radius: 50%; 
-      background: var(--accent2); 
-      flex-shrink: 0;
-      animation: logPulse 1.5s ease-in-out infinite;
-    }
-    @keyframes logPulse {
-      0%, 100% { opacity: .5; }
-      50% { opacity: 1; }
-    }
-    .log-dot.green { background: var(--green); }
-    .log-dot.red   { background: var(--red); animation: none; }
-    #logText { transition: opacity .2s; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .err-bar { background:var(--red-bg); border:1px solid var(--red-bd); border-radius:var(--radius-sm); padding:.72rem .95rem; margin:.75rem 0; font-size:.72rem; color:var(--red); line-height:1.7; display:flex; align-items:flex-start; gap:.5rem; }
 
-    /* ═══════════════════════════════════════════════
-       RESULTS AREA
-    ═══════════════════════════════════════════════ */
-    .results-area {
-      flex: 1;
-      padding: 1rem 1.5rem 1.5rem;
-      overflow-y: auto;
-      overflow-x: hidden;
-      min-height: 0;
-    }
+    /* ── Right panel ── */
+    .right-empty { display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; gap:.8rem; min-height:200px; }
+    .re-icon { width:52px; height:52px; border-radius:50%; background:var(--bg); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; }
+    .re-icon i { font-size:1.3rem; color:var(--border2); }
+    .re-text { font-family:var(--ff-sans); font-size:.75rem; color:var(--muted2); text-align:center; line-height:1.7; }
 
-    .empty-state {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100%;
-      gap: .8rem;
-      opacity: .35;
-      pointer-events: none;
-      min-height: 200px;
-    }
-    .empty-icon { font-size: 3rem; filter: grayscale(1); }
-    .empty-text { 
-      font-family: var(--mono); 
-      font-size: .7rem; 
-      color: var(--muted); 
-      text-align: center; 
-      line-height: 1.8;
-    }
+    /* Candidate header */
+    .cand-header { display:flex; align-items:center; gap:.7rem; padding:.82rem .95rem; background:var(--bg); border:1px solid var(--border); border-radius:var(--radius); margin-bottom:.85rem; }
+    .cand-avatar { width:38px; height:38px; border-radius:50%; background:linear-gradient(135deg,var(--c-violet),var(--c-pink)); display:flex; align-items:center; justify-content:center; font-family:var(--ff-display); font-size:.82rem; font-weight:700; color:#fff; flex-shrink:0; }
+    .cand-avatar.intern { background:linear-gradient(135deg,var(--c-red),var(--c-coral)); }
+    .cand-name { font-family:var(--ff-display); font-size:.9rem; font-weight:700; color:var(--ink); letter-spacing:-.02em; line-height:1.2; }
+    .cand-meta { font-family:var(--ff-mono); font-size:.58rem; color:var(--muted2); margin-top:.12rem; }
 
-    .res-tabs { 
-      display: flex; 
-      gap: .3rem; 
-      flex-wrap: wrap; 
-      margin-bottom: 1rem;
-      padding: 4px;
-      background: var(--bg3);
-      border-radius: 8px;
-    }
-    .res-tab {
-      padding: 5px 12px;
-      border-radius: 6px;
-      border: 1px solid transparent;
-      background: transparent;
-      font-family: var(--mono);
-      font-size: .62rem;
-      color: var(--muted2);
-      cursor: pointer;
-      transition: all var(--transition-fast);
-      font-weight: 500;
-      white-space: nowrap;
-    }
-    .res-tab:hover { 
-      color: var(--text); 
-      background: rgba(255,255,255,.03);
-    }
-    .res-tab.active { 
-      border-color: var(--accent); 
-      background: rgba(99,102,241,.1); 
-      color: #a5b4fc;
-    }
-    .res-tab-content { display: none; }
-    .res-tab-content.active { 
-      display: block; 
-      animation: fadeInUp .3s var(--ease-out-expo); 
-    }
-    @keyframes fadeInUp { 
-      from { opacity:0; transform: translateY(10px); } 
-      to { opacity:1; transform: none; } 
-    }
+    /* Dot meter */
+    .dot-meter-wrap { margin-bottom:.85rem; background:var(--bg); border:1px solid var(--border); border-radius:var(--radius-lg); padding:1.05rem 1rem .95rem; }
+    .dot-meter-top { display:flex; justify-content:space-between; align-items:center; margin-bottom:.85rem; }
+    .dot-meter-score-block { display:flex; align-items:baseline; gap:.28rem; }
+    .dot-big-num { font-family:var(--ff-display); font-size:2.9rem; font-weight:900; line-height:1; letter-spacing:-.06em; }
+    .dot-denom { font-family:var(--ff-mono); font-size:.6rem; color:var(--muted2); }
+    .dot-grade-badge { font-family:var(--ff-mono); font-size:.6rem; font-weight:600; padding:3px 10px; border-radius:var(--radius-xl); letter-spacing:.04em; }
+    .dot-grade-badge.great { background:var(--green-bg); color:var(--green); border:1px solid var(--green-bd); }
+    .dot-grade-badge.good  { background:var(--amber-bg); color:var(--amber); border:1px solid var(--amber-bd); }
+    .dot-grade-badge.low   { background:var(--red-bg);   color:var(--red);   border:1px solid var(--red-bd); }
 
-    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .6rem; }
-    .info-cell { 
-      background: var(--bg3);
-      padding: .6rem .8rem;
-      border-radius: 8px;
-      border: 1px solid var(--border);
-      overflow: hidden;
-    }
-    .info-cell label { 
-      font-family: var(--mono); 
-      font-size: .56rem; 
-      color: var(--muted); 
-      display: block; 
-      margin-bottom: .15rem;
-      text-transform: uppercase;
-      letter-spacing: .06em;
-    }
-    .info-cell span  { font-size: .8rem; word-break: break-all; font-weight: 500; }
-    .info-cell a     { 
-      color: #a5b4fc; 
-      text-decoration: none; 
-      font-size: .7rem;
-      transition: color var(--transition-fast);
-      word-break: break-all;
-    }
-    .info-cell a:hover { color: var(--accent2); text-decoration: underline; }
+    .dot-grid { display:grid; grid-template-columns:repeat(10,1fr); gap:3px; margin-bottom:.7rem; }
+    .dot-cell { aspect-ratio:1; border-radius:2px; background:var(--bg2); transition:background .04s; }
+    .dot-cell.filled-high { background:var(--green); }
+    .dot-cell.filled-mid  { background:var(--c-coral); }
+    .dot-cell.filled-low  { background:var(--red); }
 
-    .skill-chips { display: flex; flex-wrap: wrap; gap: .35rem; }
-    .chip { 
-      padding: 3px 10px; 
-      border-radius: 20px; 
-      font-family: var(--mono); 
-      font-size: .62rem; 
-      font-weight: 500;
-      white-space: nowrap;
-    }
-    .chip-m { 
-      background: rgba(34,197,94,.1);  
-      border: 1px solid rgba(34,197,94,.3);  
-      color: #86efac; 
-    }
-    .chip-x { 
-      background: rgba(239,68,68,.08); 
-      border: 1px solid rgba(239,68,68,.25); 
-      color: #fca5a5; 
-    }
-    .chip-d { 
-      background: rgba(99,102,241,.1); 
-      border: 1px solid rgba(99,102,241,.25); 
-      color: #a5b4fc; 
-    }
+    .dot-meter-legend { display:flex; align-items:center; gap:.85rem; }
+    .dot-legend-item { display:flex; align-items:center; gap:.3rem; font-family:var(--ff-mono); font-size:.54rem; color:var(--muted2); }
+    .dot-legend-swatch { width:8px; height:8px; border-radius:2px; }
 
-    .tl-list  { display: flex; flex-direction: column; gap: .6rem; }
-    .tl-item  { 
-      padding: .75rem .9rem; 
-      background: var(--bg3); 
-      border: 1px solid var(--border); 
-      border-left: 3px solid var(--accent); 
-      border-radius: 8px;
-    }
-    .tl-item.edu  { border-left-color: var(--accent2); }
-    .tl-item.ach  { border-left-color: var(--green); }
-    .tl-title { font-weight: 600; font-size: .8rem; line-height: 1.4; }
-    .tl-sub   { font-size: .65rem; color: var(--muted2); font-family: var(--mono); margin-top: .12rem; }
-    .tl-desc  { font-size: .7rem; color: var(--muted2); margin-top: .35rem; line-height: 1.6; }
-    .tl-date  { font-size: .6rem; color: var(--accent2); font-family: var(--mono); margin-top: .18rem; }
+    /* Breakdown bars */
+    .breakdown-list { display:flex; flex-direction:column; gap:0; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; margin-bottom:.85rem; }
+    .bkd-row { display:flex; align-items:center; padding:.52rem .82rem; gap:.65rem; border-bottom:1px solid var(--border); transition:background .12s; position:relative; }
+    .bkd-row:last-child { border-bottom:none; }
+    .bkd-row:hover { background:var(--bg); }
+    .bkd-bar-bg { position:absolute; top:0; left:0; bottom:0; background:transparent; transition:width 1.5s cubic-bezier(.4,0,.2,1); z-index:0; }
+    .bkd-icon { width:21px; height:21px; border-radius:6px; display:flex; align-items:center; justify-content:center; flex-shrink:0; z-index:1; position:relative; }
+    .bkd-icon i { font-size:.7rem; }
+    .bkd-lbl { flex:1; font-family:var(--ff-sans); font-size:.7rem; font-weight:500; color:var(--ink2); z-index:1; position:relative; min-width:0; }
+    .bkd-score-pill { font-family:var(--ff-mono); font-size:.68rem; font-weight:700; z-index:1; position:relative; min-width:26px; text-align:right; }
+    .bkd-contrib { font-family:var(--ff-mono); font-size:.57rem; color:var(--muted2); z-index:1; position:relative; min-width:30px; text-align:right; }
 
-    .proj-grid { display: grid; gap: .6rem; }
-    .proj-card { 
-      padding: .75rem .9rem; 
-      background: var(--bg3); 
-      border: 1px solid var(--border); 
-      border-radius: 8px;
-    }
-    .proj-name { font-weight: 600; font-size: .8rem; }
-    .proj-type { font-size: .6rem; color: var(--accent2); font-family: var(--mono); margin-top: .1rem; }
-    .proj-desc { font-size: .7rem; color: var(--muted2); margin-top: .3rem; line-height: 1.6; }
+    /* Component grid — 4 cols for 8 items */
+    .comp-grid { display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:.38rem; margin-bottom:.85rem; }
+    .comp-tile { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-sm); padding:.58rem .62rem; transition:border-color .15s; }
+    .comp-tile:hover { border-color:var(--border2); }
+    .comp-tile-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:.35rem; }
+    .comp-tile-icon { width:19px; height:19px; border-radius:5px; display:flex; align-items:center; justify-content:center; }
+    .comp-tile-icon i { font-size:.62rem; }
+    .comp-tile-val { font-family:var(--ff-display); font-size:1.05rem; font-weight:800; line-height:1; letter-spacing:-.04em; }
+    .comp-tile-lbl { font-family:var(--ff-mono); font-size:.49rem; font-weight:600; text-transform:uppercase; letter-spacing:.07em; color:var(--muted2); line-height:1.3; }
+    .comp-seg { display:flex; gap:2px; margin-top:.35rem; }
+    .comp-seg-dot { flex:1; height:3px; border-radius:2px; background:var(--bg2); transition:background .4s; }
 
-    .json-box {
-      background: var(--bg3); 
-      border: 1px solid var(--border); 
-      border-radius: 8px;
-      padding: .9rem; 
-      font-family: var(--mono); 
-      font-size: .62rem;
-      overflow: auto; 
-      max-height: 350px; 
-      line-height: 1.6; 
-      white-space: pre-wrap;
-      word-break: break-all; 
-      color: #7c85b0;
-    }
-    .copy-btn {
-      float: right; 
-      margin-bottom: .4rem;
-      padding: 4px 12px; 
-      background: var(--bg3); 
-      border: 1px solid var(--border2);
-      border-radius: 6px; 
-      cursor: pointer; 
-      font-family: var(--mono); 
-      font-size: .6rem;
-      color: var(--muted2);
-      transition: all var(--transition-fast);
-    }
-    .copy-btn:hover { color: var(--text); border-color: var(--accent); }
+    /* AI Insight */
+    .insight-box { background:var(--bg); border:1px solid var(--border); border-left:3px solid var(--c-violet); border-radius:0 var(--radius-sm) var(--radius-sm) 0; padding:.72rem .82rem; font-size:.72rem; color:var(--ink2); line-height:1.7; margin-bottom:.85rem; }
+    .insight-box-hdr { display:flex; align-items:center; gap:.4rem; font-family:var(--ff-mono); font-size:.57rem; font-weight:600; text-transform:uppercase; letter-spacing:.08em; color:#5c00bb; margin-bottom:.38rem; }
 
-    .sum-box { 
-      background: var(--bg3); 
-      border: 1px solid var(--border); 
-      border-radius: 8px; 
-      padding: .8rem 1rem; 
-      font-size: .78rem; 
-      line-height: 1.7; 
-      color: var(--text); 
-    }
+    /* Social */
+    .social-strip { display:flex; flex-direction:column; gap:.32rem; }
+    .soc-row { display:flex; align-items:center; gap:.65rem; padding:.48rem .78rem; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-sm); transition:border-color .12s; }
+    .soc-row:hover { border-color:var(--border2); }
+    .soc-icon-sq { width:26px; height:26px; border-radius:7px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+    .soc-icon-sq i { font-size:.85rem; }
+    .soc-info { flex:1; min-width:0; }
+    .soc-plat { font-family:var(--ff-sans); font-size:.72rem; font-weight:600; color:var(--ink2); }
+    .soc-stat-line { font-family:var(--ff-mono); font-size:.57rem; color:var(--muted2); margin-top:.04rem; }
+    .soc-score-num { font-family:var(--ff-display); font-size:1rem; font-weight:800; letter-spacing:-.03em; }
+    .soc-na-txt { font-family:var(--ff-mono); font-size:.58rem; color:var(--muted2); }
 
-    .err-bar {
-      background: rgba(239,68,68,.06); 
-      border: 1px solid rgba(239,68,68,.25);
-      border-radius: 8px; 
-      padding: .7rem .9rem; 
-      margin: .8rem 0;
-      font-family: var(--mono); 
-      font-size: .65rem; 
-      color: #fca5a5; 
-      line-height: 1.7;
-    }
+    /* Toast */
+    .toast { position:fixed; bottom:20px; right:20px; background:var(--ink); border-radius:var(--radius); padding:.72rem 1.1rem; font-family:var(--ff-sans); font-size:.72rem; font-weight:500; color:#fff; z-index:10000; display:flex; align-items:center; gap:.5rem; animation:toastIn .22s ease, toastOut .22s ease 2.5s forwards; }
+    @keyframes toastIn  { from { transform:translateY(12px);opacity:0; } to { transform:none;opacity:1; } }
+    @keyframes toastOut { from { opacity:1; } to { opacity:0;transform:translateY(8px); } }
 
-    /* ═══════════════════════════════════════════════
-       RIGHT PANEL — SCORES
-    ═══════════════════════════════════════════════ */
-    .big-score-card {
-      background: linear-gradient(135deg, var(--bg3), var(--bg2));
-      border: 1px solid var(--border2);
-      border-radius: 14px;
-      padding: 1.2rem;
-      margin-bottom: 1rem;
-      position: relative;
-      overflow: hidden;
-    }
-    .big-score-card::before {
-      content: '';
-      position: absolute; 
-      top: 0; left: 0; right: 0; height: 2px;
-      background: linear-gradient(90deg, transparent, var(--accent), var(--accent2), transparent);
-    }
-    .big-score-top { 
-      display: flex; 
-      align-items: center; 
-      gap: 1rem; 
-      margin-bottom: 1rem; 
-    }
-    .big-gauge-wrap { 
-      position: relative; 
-      width: 100px; 
-      height: 100px; 
-      flex-shrink: 0; 
-    }
-    .big-gauge-wrap svg { transform: rotate(-90deg); }
-    .gauge-track-big { fill: none; stroke: var(--border2); stroke-width: 8; }
-    .gauge-fill-big  { 
-      fill: none; 
-      stroke-width: 8; 
-      stroke-linecap: round; 
-      transition: stroke-dashoffset 2s cubic-bezier(.4,0,.2,1);
-      filter: drop-shadow(0 0 6px currentColor);
-    }
-    .big-gauge-center {
-      position: absolute; 
-      inset: 0;
-      display: flex; 
-      flex-direction: column; 
-      align-items: center; 
-      justify-content: center;
-    }
-    .big-score-num { 
-      font-size: 1.8rem; 
-      font-weight: 700; 
-      line-height: 1; 
-      letter-spacing: -.03em;
-    }
-    .big-score-den { 
-      font-size: .55rem; 
-      font-family: var(--mono); 
-      color: var(--muted); 
-      margin-top: .1rem; 
-    }
-    .score-right { flex: 1; min-width: 0; }
-    .score-label  { 
-      font-size: 1rem; 
-      font-weight: 700; 
-      line-height: 1.2; 
-      margin-bottom: .25rem; 
-    }
-    .score-name   { 
-      font-size: .72rem; 
-      color: var(--muted2); 
-      font-family: var(--mono); 
-      margin-bottom: .4rem; 
-      white-space: nowrap; 
-      overflow: hidden; 
-      text-overflow: ellipsis; 
-    }
-    .score-opp { 
-      display: inline-block; 
-      padding: 3px 10px; 
-      border-radius: 20px; 
-      font-family: var(--mono); 
-      font-size: .6rem; 
-      font-weight: 600; 
-    }
-    .score-opp.job { 
-      background: rgba(99,102,241,.12); 
-      border: 1px solid rgba(99,102,241,.3); 
-      color: #a5b4fc; 
-    }
-    .score-opp.intern { 
-      background: rgba(249,115,22,.1);  
-      border: 1px solid rgba(249,115,22,.3); 
-      color: var(--orange); 
-    }
-
-    .weight-grid { display: flex; flex-direction: column; gap: .45rem; }
-    .wt-row { 
-      display: flex; 
-      align-items: center; 
-      gap: .5rem;
-      padding: .35rem .5rem;
-      background: var(--bg2);
-      border-radius: 6px;
-      transition: all var(--transition-fast);
-    }
-    .wt-row:hover { background: var(--bg3); transform: translateX(2px); }
-    .wt-dot  { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-    .wt-lbl  { 
-      font-family: var(--mono); 
-      font-size: .6rem; 
-      color: var(--muted2); 
-      width: 85px; 
-      flex-shrink: 0; 
-    }
-    .wt-bar  { 
-      flex: 1; 
-      height: 4px; 
-      background: var(--border2); 
-      border-radius: 2px; 
-      overflow: hidden; 
-      min-width: 0;
-    }
-    .wt-fill { 
-      height: 100%; 
-      border-radius: 2px; 
-      transition: width 1.6s cubic-bezier(.4,0,.2,1); 
-    }
-    .wt-num  { 
-      font-family: var(--mono); 
-      font-size: .6rem; 
-      width: 30px; 
-      text-align: right; 
-      flex-shrink: 0;
-      font-weight: 600;
-    }
-    .wt-pts  { 
-      font-family: var(--mono); 
-      font-size: .55rem; 
-      color: var(--muted); 
-      width: 32px; 
-      text-align: right; 
-      flex-shrink: 0; 
-    }
-
-    .mini-cards { 
-      display: grid; 
-      grid-template-columns: 1fr 1fr; 
-      gap: .5rem; 
-      margin-top: .8rem; 
-    }
-    .mini-card {
-      background: var(--bg3); 
-      border: 1px solid var(--border); 
-      border-radius: 10px;
-      padding: .65rem .75rem; 
-      position: relative; 
-      overflow: hidden;
-      transition: all var(--transition-fast);
-    }
-    .mini-card:hover { transform: translateY(-1px); }
-    .mini-card::after {
-      content: '';
-      position: absolute; 
-      top: 0; left: 0; 
-      width: 3px; 
-      height: 100%;
-      border-radius: 0 2px 2px 0;
-    }
-    .mc-skill::after   { background: var(--accent2); }
-    .mc-exp::after     { background: var(--yellow); }
-    .mc-edu::after     { background: var(--pink); }
-    .mc-ach::after     { background: var(--green); }
-    .mc-social::after  { background: #84cc16; }
-    .mc-sem::after     { background: #a78bfa; }
-    .mc-title { 
-      font-family: var(--mono); 
-      font-size: .55rem; 
-      color: var(--muted2); 
-      margin-bottom: .35rem; 
-    }
-    .mc-score-val { 
-      font-size: 1.1rem; 
-      font-weight: 700; 
-      line-height: 1;
-    }
-    .mc-bar { 
-      height: 3px; 
-      background: var(--border2); 
-      border-radius: 2px; 
-      overflow: hidden; 
-      margin-top: .4rem; 
-    }
-    .mc-bar-fill { 
-      height: 100%; 
-      border-radius: 2px; 
-      transition: width 1.5s cubic-bezier(.4,0,.2,1); 
-    }
-
-    .sem-box {
-      background: var(--bg3); 
-      border: 1px solid var(--border); 
-      border-radius: 10px;
-      padding: .7rem .85rem; 
-      margin-top: .8rem;
-      font-size: .7rem; 
-      color: var(--muted2); 
-      line-height: 1.7;
-      font-style: italic;
-    }
-    .sem-box strong { color: var(--text); font-style: normal; }
-
-    .social-row { 
-      display: grid; 
-      grid-template-columns: repeat(3,1fr); 
-      gap: .5rem; 
-      margin-top: .8rem; 
-    }
-    .soc-card { 
-      background: var(--bg3); 
-      border: 1px solid var(--border); 
-      border-radius: 10px; 
-      padding: .55rem .6rem;
-      transition: all var(--transition-fast);
-    }
-    .soc-card:hover { border-color: var(--accent); }
-    .soc-hdr  { 
-      display: flex; 
-      align-items: center; 
-      gap: .35rem; 
-      margin-bottom: .25rem; 
-    }
-    .soc-icon { font-size: .9rem; }
-    .soc-name { 
-      font-family: var(--mono); 
-      font-size: .62rem; 
-      font-weight: 700; 
-      flex: 1; 
-    }
-    .soc-val  { 
-      font-family: var(--mono); 
-      font-size: .68rem; 
-      font-weight: 700; 
-    }
-    .soc-stat { 
-      font-family: var(--mono); 
-      font-size: .56rem; 
-      color: var(--muted2); 
-      line-height: 1.5;
-    }
-    .soc-na { 
-      text-align: center; 
-      padding: .35rem; 
-      font-family: var(--mono); 
-      font-size: .58rem; 
-      color: var(--muted); 
-    }
-
-    .right-empty {
-      display: flex; 
-      flex-direction: column; 
-      align-items: center; 
-      justify-content: center;
-      height: 100%; 
-      gap: .6rem; 
-      opacity: .25;
-      font-family: var(--mono); 
-      font-size: .65rem; 
-      color: var(--muted); 
-      text-align: center;
-    }
-
-    .toast {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      background: var(--bg3);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: .8rem 1.2rem;
-      font-family: var(--mono);
-      font-size: .65rem;
-      color: var(--text);
-      z-index: 10000;
-      animation: toastIn .3s var(--ease-out-expo), toastOut .3s var(--ease-out-expo) 2.5s forwards;
-      box-shadow: 0 8px 24px rgba(0,0,0,.4);
-    }
-    @keyframes toastIn {
-      from { transform: translateY(20px); opacity: 0; }
-      to { transform: translateY(0); opacity: 1; }
-    }
-    @keyframes toastOut {
-      from { opacity: 1; }
-      to { opacity: 0; transform: translateY(10px); }
-    }
-
-    /* Responsive */
-    @media (max-width: 1400px) {
-      .shell {
-        grid-template-columns: 300px 1fr 350px;
-      }
-      .p-node-box-v { width: 180px; }
-      .p-node-start-v, .p-node-end-v { width: 180px; }
-      .p-connector-v { margin-left: 90px; }
-    }
-    @media (max-width: 1200px) {
-      .shell {
-        grid-template-columns: 1fr;
-        grid-template-rows: 56px auto 1fr auto;
-        overflow-y: auto;
-      }
-      .panel-left { grid-column: 1; grid-row: 2; border-right: none; border-bottom: 1px solid var(--border); max-height: 50vh; }
-      .panel-center { grid-column: 1; grid-row: 3; }
-      .panel-right { grid-column: 1; grid-row: 4; border-left: none; border-top: 1px solid var(--border); }
-      
-      .pipeline-graph-vertical { max-height: none; }
-      .p-node-box-v { width: 100%; max-width: 400px; }
-      .p-node-start-v, .p-node-end-v { width: 100%; max-width: 400px; }
-      .p-connector-v { margin-left: 50%; }
+    @media (max-width:1400px) { .shell { grid-template-columns:280px 1fr 310px; } .comp-grid { grid-template-columns:1fr 1fr; } }
+    @media (max-width:1100px) {
+      .shell { grid-template-columns:1fr; grid-template-rows:56px auto 1fr auto; overflow-y:auto; height:auto; }
+      html,body { overflow:auto; }
+      .panel-left   { grid-column:1; grid-row:2; border-right:none; border-bottom:1px solid var(--border); }
+      .panel-center { grid-column:1; grid-row:3; }
+      .panel-right  { grid-column:1; grid-row:4; border-left:none; border-top:1px solid var(--border); }
+      .steps-grid   { grid-template-columns: repeat(5,1fr); }
     }
   </style>
 </head>
 <body>
 <div class="shell">
 
-  <!-- ══════ TOP BAR ══════ -->
+  <!-- ══ TOPBAR ══ -->
   <header class="topbar">
-    <div class="topbar-logo">RESUME<span>IQ</span></div>
-    <div class="version-dot"></div>
-    <span class="topbar-tag">v1.3 · 7 AGENTS · LANGGRAPH</span>
+    <div class="topbar-wordmark">
+      <span class="wordmark-resume">Resume</span><span class="wordmark-iq">IQ</span>
+    </div>
+    <div class="topbar-divider"></div>
+    <div class="topbar-badge">
+      <div class="rainbow-dot"></div>
+      8 agents · LangGraph
+    </div>
+    <div class="palette-strip">
+      <div class="pswatch" style="background:#FF4433"></div>
+      <div class="pswatch" style="background:#40E0D0"></div>
+      <div class="pswatch" style="background:#FF5CAD"></div>
+      <div class="pswatch" style="background:#DE8AFF"></div>
+      <div class="pswatch" style="background:#5CC6FF"></div>
+      <div class="pswatch" style="background:#EBFF8A"></div>
+      <div class="pswatch" style="background:#DFEBCC"></div>
+      <div class="pswatch" style="background:#F6C1DA"></div>
+      <div class="pswatch" style="background:#FF8A8A"></div>
+      <div class="pswatch" style="background:#915F6D"></div>
+      <div class="pswatch" style="background:#7F00FF"></div>
+    </div>
     <div class="topbar-sep"></div>
-    <span class="topbar-tag" id="modeTag">💼 JOB MODE</span>
-    <span class="tooltip" data-tip="Real-time AI analysis">ℹ️</span>
+    <div class="mode-pill job" id="modePill">
+      <i class="fa-solid fa-briefcase"></i>
+      <span id="modePillText">Job Mode</span>
+    </div>
+    <div class="status-dot" id="statusDot" title="System online"></div>
   </header>
 
-  <!-- ══════ LEFT — FORM ══════ -->
+  <!-- ══ LEFT PANEL ══ -->
   <aside class="panel-left">
-    <div class="section-label">Opportunity Type</div>
+    <div class="section-label">
+      <i class="fa-solid fa-sliders" style="color:var(--c-teal)"></i>
+      Opportunity Type
+    </div>
     <div class="opp-toggle">
-      <button class="opp-btn active-job" id="btnJob" onclick="setOpp('job')">💼 Full-Time Job</button>
-      <button class="opp-btn" id="btnIntern" onclick="setOpp('internship')">🎓 Internship</button>
+      <button class="opp-btn active-job" id="btnJob" onclick="setOpp('job')">
+        <i class="fa-solid fa-briefcase"></i> Full-Time Job
+      </button>
+      <button class="opp-btn" id="btnIntern" onclick="setOpp('internship')">
+        <i class="fa-solid fa-graduation-cap"></i> Internship
+      </button>
     </div>
     <input type="hidden" id="oppType" value="job"/>
 
     <div class="intern-note-bar" id="internNote">
-      ⚡ Intern mode — skills &amp; projects weighted higher, experience penalty off
+      <i class="fa-solid fa-bolt" style="color:var(--c-coral)"></i>
+      Intern mode — skills &amp; projects weighted higher, experience penalty off
     </div>
 
-    <div class="section-label">Resume File</div>
-    <div class="dropzone" id="dropzone">
+    <div class="section-label">
+      <i class="fa-solid fa-file-arrow-up" style="color:var(--c-sky)"></i>
+      Resume File
+    </div>
+    <div class="dropzone" id="dropzone" onclick="document.getElementById('resumeFile').click()">
       <input type="file" id="resumeFile" accept=".pdf,.docx,.doc"/>
-      <div class="dz-icon">📄</div>
-      <div class="dz-text"><strong>Click to upload</strong> or drag &amp; drop</div>
-      <div class="dz-text">.pdf · .docx · .doc (Max 10MB)</div>
-      <div class="dz-file" id="fileName"></div>
+      <div class="dz-icon-wrap"><i class="fa-solid fa-cloud-arrow-up"></i></div>
+      <div class="dz-text-main">Drop file or click to upload</div>
+      <div class="dz-text-sub">.pdf · .docx · .doc — max 10 MB</div>
+      <div class="dz-file" id="fileName" style="display:none">
+        <i class="fa-solid fa-circle-check"></i>
+        <span id="fileNameText"></span>
+      </div>
     </div>
 
     <hr class="divider"/>
-    <div class="section-label">Opportunity Details</div>
+    <div class="section-label">
+      <i class="fa-solid fa-pen-to-square" style="color:var(--c-pink)"></i>
+      <span id="detailsLbl">Job Details</span>
+    </div>
 
     <div class="form-group">
-      <label class="form-label" id="titleLbl">Job Title *</label>
-      <input type="text" id="jobTitle" placeholder="Senior ML Engineer" required/>
+      <label class="form-label" id="titleLbl"><i class="fa-solid fa-tag"></i> Job Title <span class="req">*</span></label>
+      <input type="text" id="jobTitle" placeholder="e.g. Senior ML Engineer"/>
     </div>
     <div class="form-group">
-      <label class="form-label" id="roleLbl">Job Role *</label>
-      <input type="text" id="jobRole" placeholder="ML Engineer" required/>
+      <label class="form-label" id="roleLbl"><i class="fa-solid fa-user-tie"></i> Job Role <span class="req">*</span></label>
+      <input type="text" id="jobRole" placeholder="e.g. ML Engineer"/>
     </div>
     <div class="form-group">
-      <label class="form-label" id="descLbl">Description *</label>
-      <textarea id="jobDesc" rows="4" placeholder="Paste full job/internship description..." required></textarea>
+      <label class="form-label" id="descLbl"><i class="fa-solid fa-align-left"></i> Description <span class="req">*</span></label>
+      <textarea id="jobDesc" rows="4" placeholder="Paste the full job description here…"></textarea>
     </div>
     <div class="form-group">
-      <label class="form-label">Skills Required <span style="color:var(--muted);">(comma separated)</span></label>
+      <label class="form-label">
+        <i class="fa-solid fa-code"></i> Required Skills
+        <span style="font-size:.6rem;color:var(--muted2);font-weight:400">(comma-separated)</span>
+      </label>
       <input type="text" id="skills" placeholder="Python, PyTorch, LangChain, FastAPI"/>
     </div>
     <div class="form-group years-wrap" id="yearsWrap">
-      <label class="form-label">Years of Experience Required</label>
+      <label class="form-label"><i class="fa-regular fa-clock"></i> Years of Experience Required</label>
       <input type="number" id="yearsExp" placeholder="3" min="0" max="30" step="0.5"/>
     </div>
     <div class="form-group">
-      <label class="form-label">Education Required</label>
+      <label class="form-label"><i class="fa-solid fa-school"></i> Education Required</label>
       <input type="text" id="eduReq" placeholder="B.Tech in Computer Science"/>
     </div>
 
     <button class="btn-run" id="runBtn" onclick="runPipeline()">
-      <span class="spinner" id="spinner"></span>
-      <span id="runBtnTxt">⚡ Run Pipeline</span>
+      <div class="spinner" id="spinner"></div>
+      <i class="fa-solid fa-play" id="runIcon"></i>
+      <span id="runBtnTxt">Run Analysis</span>
     </button>
+    <div class="kbd-hint"><span class="kbd">Ctrl</span> + <span class="kbd">Enter</span> to run</div>
   </aside>
 
-  <!-- ══════ CENTER — PIPELINE + RESULTS ══════ -->
+  <!-- ══ CENTER ══ -->
   <main class="panel-center">
-    <div class="pipeline-area">
-      <div class="pipeline-header">
-        <div class="pipeline-title">⚙️ LangGraph Pipeline</div>
-        <div class="pipeline-status-text" id="pipeStatusTxt">idle</div>
+    <div class="steps-grid" id="stepsGrid">
+      <div class="step-tile" id="step-parser">
+        <i class="fa-solid fa-file-lines"></i><span class="step-tile-text">Resume Parser</span><div class="step-check"><i class="fa-solid fa-check" style="font-size:.4rem"></i></div>
       </div>
-      <div class="pipeline-graph-vertical" id="pipelineGraph">
-        <!-- Built by JS -->
+      <div class="step-tile" id="step-skills">
+        <i class="fa-solid fa-magnifying-glass"></i><span class="step-tile-text">Skill Match</span><div class="step-check"><i class="fa-solid fa-check" style="font-size:.4rem"></i></div>
+      </div>
+      <div class="step-tile" id="step-experience">
+        <i class="fa-solid fa-briefcase"></i><span class="step-tile-text">Experience</span><div class="step-check"><i class="fa-solid fa-check" style="font-size:.4rem"></i></div>
+      </div>
+      <div class="step-tile" id="step-education">
+        <i class="fa-solid fa-graduation-cap"></i><span class="step-tile-text">Education</span><div class="step-check"><i class="fa-solid fa-check" style="font-size:.4rem"></i></div>
+      </div>
+      <div class="step-tile" id="step-achievement">
+        <i class="fa-solid fa-trophy"></i><span class="step-tile-text">Achievements</span><div class="step-check"><i class="fa-solid fa-check" style="font-size:.4rem"></i></div>
+      </div>
+      <div class="step-tile" id="step-social">
+        <i class="fa-solid fa-globe"></i><span class="step-tile-text">Social</span><div class="step-check"><i class="fa-solid fa-check" style="font-size:.4rem"></i></div>
+      </div>
+      <div class="step-tile" id="step-project">
+        <i class="fa-solid fa-rocket"></i><span class="step-tile-text">Projects</span><div class="step-check"><i class="fa-solid fa-check" style="font-size:.4rem"></i></div>
+      </div>
+      <div class="step-tile" id="step-final">
+        <i class="fa-solid fa-calculator"></i><span class="step-tile-text">Final Score</span><div class="step-check"><i class="fa-solid fa-check" style="font-size:.4rem"></i></div>
+      </div>
+      <div class="step-tile" id="step-done">
+        <i class="fa-solid fa-circle-check"></i><span class="step-tile-text">Complete</span><div class="step-check"><i class="fa-solid fa-check" style="font-size:.4rem"></i></div>
       </div>
     </div>
-    <div class="pipeline-log">
-      <div class="log-dot" id="logDot"></div>
-      <span id="logText">⏳ Waiting for input…</span>
+
+    <div class="status-bar">
+      <div class="status-bar-dot" id="sbDot"></div>
+      <span class="status-bar-text" id="sbText">Waiting for input — fill in the form and run analysis</span>
+      <span class="status-bar-time" id="sbTime"></span>
     </div>
+
     <div class="results-area" id="resultsArea">
       <div class="empty-state">
-        <div class="empty-icon">🔬</div>
-        <div class="empty-text">Fill in the form &amp; upload a resume<br/>to start the AI analysis pipeline</div>
+        <div class="empty-icon-wrap">
+          <div class="empty-icon-inner"><i class="fa-solid fa-flask"></i></div>
+        </div>
+        <div class="empty-heading">No analysis yet</div>
+        <div class="empty-sub">Upload a resume, fill in the job details, and click Run Analysis to start the 8-agent pipeline.</div>
       </div>
     </div>
   </main>
 
-  <!-- ══════ RIGHT — SCORES ══════ -->
+  <!-- ══ RIGHT PANEL ══ -->
   <aside class="panel-right" id="panelRight">
     <div class="right-empty" id="rightEmpty">
-      <div style="font-size:2rem">📊</div>
-      <div>Scores will appear<br/>after pipeline completes</div>
+      <div class="re-icon"><i class="fa-solid fa-chart-bar"></i></div>
+      <div class="re-text">Score breakdown will<br/>appear after analysis</div>
     </div>
     <div id="rightContent" style="display:none"></div>
   </aside>
@@ -1325,594 +520,578 @@
 </div>
 
 <script>
-/* ═══════════════════════════════════════════════════
-   PIPELINE NODES DEFINITION
-═══════════════════════════════════════════════════ */
-const NODES = [
-  { id:'parser',      icon:'📄', label:'Resume Parser',       step:'01', tooltip:'Extract text & structure from resume' },
-  { id:'skills',      icon:'🔍', label:'Skill Matching',       step:'02', tooltip:'Match skills against job requirements' },
-  { id:'experience',  icon:'💼', label:'Experience Scoring',   step:'03', tooltip:'Evaluate work history relevance' },
-  { id:'education',   icon:'🎓', label:'Education Scoring',    step:'04', tooltip:'Assess educational qualifications' },
-  { id:'achievement', icon:'🏆', label:'Achievement Scoring',  step:'05', tooltip:'Score achievements & certifications' },
-  { id:'social',      icon:'🌐', label:'Social Profile Agent', step:'06', tooltip:'Analyze GitHub, LeetCode, Codeforces' },
-  { id:'llm',         icon:'🧠', label:'LLM Scoring + Regress',step:'07', tooltip:'Final AI scoring with regression' },
-];
+/* ── Step timing (9 steps: 8 agents + done) ── */
+const STEPS = ['parser','skills','experience','education','achievement','social','project','final','done'];
+const STEP_TIMING = {
+  parser:6000, skills:5000, experience:8000, education:6000,
+  achievement:5000, social:7000, project:6000, final:3000, done:1000
+};
+let simInterval = null;
 
-const NODE_TIMING = { parser:6000, skills:5000, experience:8000, education:6000, achievement:5000, social:7000, llm:5000 };
-
-/* ═══════════════════════════════════════════════════
-   BUILD VERTICAL PIPELINE GRAPH
-═══════════════════════════════════════════════════ */
-function buildPipelineGraph() {
-  const container = document.getElementById('pipelineGraph');
-  container.innerHTML = '';
-
-  // START node
-  const startEl = document.createElement('div');
-  startEl.className = 'p-node-start-v';
-  startEl.textContent = '▶ START';
-  startEl.title = 'Pipeline Start';
-  container.appendChild(startEl);
-
-  // Connector from START
-  container.appendChild(makeConnectorV('conn-start', false));
-
-  NODES.forEach((node, i) => {
-    // Node
-    const nodeEl = document.createElement('div');
-    nodeEl.className = 'p-node-v';
-    nodeEl.innerHTML = `
-      <div class="p-node-box-v pending" id="node-${node.id}" title="${node.tooltip}">
-        <div class="p-node-tick-v">✓</div>
-        <div class="p-node-icon-v">${node.icon}</div>
-        <div class="p-node-content-v">
-          <div class="p-node-label-v">${node.label}</div>
-        </div>
-        <div class="p-node-step-v">${node.step}</div>
-      </div>`;
-    container.appendChild(nodeEl);
-
-    // Connector after node (except last)
-    if (i < NODES.length - 1) {
-      container.appendChild(makeConnectorV(`conn-${node.id}`, false));
-    }
-  });
-
-  // Connector to END
-  container.appendChild(makeConnectorV('conn-end', false));
-
-  // END node
-  const endEl = document.createElement('div');
-  endEl.className = 'p-node-end-v';
-  endEl.id = 'node-end';
-  endEl.textContent = '✓ COMPLETE';
-  endEl.title = 'Pipeline Complete';
-  container.appendChild(endEl);
+function resetSteps() {
+  STEPS.forEach(s => { const el = document.getElementById(`step-${s}`); if(el) el.className = 'step-tile'; });
+  setStatusBar('', 'Waiting for input…');
 }
-
-function makeConnectorV(id, lit) {
-  const el = document.createElement('div');
-  el.className = `p-connector-v${lit ? ' lit' : ''}`;
-  el.id = id;
-  el.innerHTML = `
-    <div class="p-connector-line-v"></div>
-    <div class="p-connector-bolt-v">⚡</div>
-    <div class="p-connector-packet-v"></div>`;
-  return el;
+function setStepState(id, state) { const el = document.getElementById(`step-${id}`); if(el) el.className = `step-tile ${state}`; }
+function setStatusBar(state, text, time='') {
+  const dot = document.getElementById('sbDot'), txt = document.getElementById('sbText'), tm = document.getElementById('sbTime');
+  dot.className = `status-bar-dot ${state}`; txt.style.opacity = '0';
+  setTimeout(() => { txt.textContent = text; txt.style.opacity = '1'; }, 80);
+  tm.textContent = time;
 }
-
-buildPipelineGraph();
-
-/* ═══════════════════════════════════════════════════
-   PIPELINE ANIMATION CONTROLLER
-═══════════════════════════════════════════════════ */
-let pipelineSimInterval = null;
-
-function resetPipeline() {
-  NODES.forEach(n => setNodeState(n.id, 'pending'));
-  document.querySelectorAll('.p-connector-v').forEach(c => {
-    c.classList.remove('lit', 'flowing');
-  });
-  document.getElementById('node-end').classList.remove('lit');
-  setPipeStatus('idle', 'idle');
-}
-
-function setNodeState(nodeId, state) {
-  const el = document.getElementById(`node-${nodeId}`);
-  if (!el) return;
-  el.className = `p-node-box-v ${state}`;
-}
-
-function setConnectorStateV(connId, state) {
-  const el = document.getElementById(connId);
-  if (!el) return;
-  el.classList.remove('lit', 'flowing');
-  if (state) el.classList.add(state);
-}
-
-function setPipeStatus(state, text) {
-  const el = document.getElementById('pipeStatusTxt');
-  el.className = `pipeline-status-text ${state}`;
-  el.textContent = text;
-}
-
-function setLog(text, color='') {
-  const dot = document.getElementById('logDot');
-  const txt = document.getElementById('logText');
-  dot.className = `log-dot ${color}`;
-  txt.style.opacity = '0';
-  setTimeout(() => { txt.textContent = text; txt.style.opacity = '1'; }, 100);
-}
-
-function simulatePipeline(totalExpectedMs) {
-  if (pipelineSimInterval) clearInterval(pipelineSimInterval);
-
-  let nodeIndex = -1;
-  let elapsed = 0;
-  const tickMs = 200;
-  const cumulative = [];
-  let cum = 0;
-  NODES.forEach(n => { cum += NODE_TIMING[n.id]; cumulative.push(cum); });
-  const total = cum;
-
-  setPipeStatus('running', 'running…');
-  setConnectorStateV('conn-start', 'flowing');
-
-  pipelineSimInterval = setInterval(() => {
-    elapsed += tickMs;
-    const ratio = Math.min(elapsed / totalExpectedMs, 0.95);
-    const simElapsed = ratio * total;
-
+function simulateSteps(totalMs) {
+  if(simInterval) clearInterval(simInterval);
+  const cumulTimes = []; let cum = 0;
+  const activeSteps = STEPS.slice(0,-1);
+  activeSteps.forEach(s => { cum += STEP_TIMING[s]; cumulTimes.push(cum); });
+  const total = cum; let elapsed = 0; const tick = 200; let stepIdx = -1;
+  setStatusBar('running', 'Analysis running — 8 AI agents working…');
+  simInterval = setInterval(() => {
+    elapsed += tick;
+    const ratio = Math.min(elapsed / totalMs, 0.92), simE = ratio * total;
     let activeIdx = 0;
-    for (let i = 0; i < cumulative.length; i++) {
-      if (simElapsed >= cumulative[i]) activeIdx = i + 1;
+    for(let i = 0; i < cumulTimes.length; i++) { if(simE >= cumulTimes[i]) activeIdx = i+1; }
+    activeIdx = Math.min(activeIdx, activeSteps.length - 1);
+    if(activeIdx > stepIdx) {
+      if(stepIdx >= 0) setStepState(activeSteps[stepIdx], 'done');
+      stepIdx = activeIdx; setStepState(activeSteps[stepIdx], 'running');
     }
-    activeIdx = Math.min(activeIdx, NODES.length - 1);
-
-    if (activeIdx > nodeIndex) {
-      if (nodeIndex >= 0) {
-        setNodeState(NODES[nodeIndex].id, 'done');
-        setConnectorStateV(`conn-${NODES[nodeIndex].id}`, 'lit');
-        if (nodeIndex + 1 < NODES.length) {
-          setConnectorStateV(`conn-${NODES[nodeIndex].id}`, 'lit');
-        }
-      }
-      nodeIndex = activeIdx;
-      setNodeState(NODES[nodeIndex].id, 'running');
-      const incomingId = nodeIndex === 0 ? 'conn-start' : `conn-${NODES[nodeIndex-1].id}`;
-      setConnectorStateV(incomingId, 'flowing');
-      setLog(`[Agent ${NODES[nodeIndex].step}] ${NODES[nodeIndex].label} running…`, '');
-    }
-  }, tickMs);
+  }, tick);
+}
+function completeSteps(ok) {
+  if(simInterval) { clearInterval(simInterval); simInterval = null; }
+  STEPS.slice(0,-1).forEach(s => setStepState(s, 'done'));
+  if(ok) { setStepState('done','done'); setStatusBar('done','Analysis complete — all 8 agents finished'); }
+  else    { setStatusBar('error','Error — could not connect to analysis server'); }
 }
 
-function completePipeline(success) {
-  if (pipelineSimInterval) { clearInterval(pipelineSimInterval); pipelineSimInterval = null; }
-  NODES.forEach((n, i) => {
-    setNodeState(n.id, success ? 'done' : (i === NODES.length - 1 ? 'error' : 'done'));
-  });
-  NODES.forEach((n, i) => {
-    setConnectorStateV(i === 0 ? 'conn-start' : `conn-${NODES[i-1].id}`, 'lit');
-    setConnectorStateV(`conn-${n.id}`, 'lit');
-  });
-  setConnectorStateV('conn-end', 'lit');
-  if (success) {
-    document.getElementById('node-end').classList.add('lit');
-    setPipeStatus('done', '✅ Complete');
-    setLog('🎉 Pipeline complete — all 7 agents finished successfully', 'green');
-  } else {
-    setPipeStatus('error', '❌ Error');
-    setLog('⚠️ Pipeline error — check server connection', 'red');
-  }
-}
-
-/* ═══════════════════════════════════════════════════
-   OPPORTUNITY TOGGLE
-═══════════════════════════════════════════════════ */
+/* ── Opp toggle ── */
 function setOpp(type) {
   document.getElementById('oppType').value = type;
-  const isIntern = type === 'internship';
-  document.getElementById('btnJob').className = `opp-btn ${isIntern ? '' : 'active-job'}`;
-  document.getElementById('btnIntern').className = `opp-btn ${isIntern ? 'active-intern' : ''}`;
-  document.getElementById('internNote').classList.toggle('show', isIntern);
-  document.getElementById('yearsWrap').classList.toggle('dim', isIntern);
-  document.getElementById('runBtn').classList.toggle('intern', isIntern);
-  const modeTag = document.getElementById('modeTag');
-  modeTag.textContent = isIntern ? '🎓 INTERNSHIP MODE' : '💼 JOB MODE';
-  modeTag.className = `topbar-tag ${isIntern ? 'active-intern' : 'active-job'}`;
-  const lbl = isIntern ? 'Internship' : 'Job';
-  document.getElementById('titleLbl').textContent = `${lbl} Title *`;
-  document.getElementById('roleLbl').textContent = `${lbl} Role *`;
-  document.getElementById('descLbl').textContent = `${lbl} Description *`;
-  document.getElementById('runBtnTxt').textContent = isIntern ? '⚡ Run Pipeline (Internship)' : '⚡ Run Pipeline';
-  document.getElementById('jobTitle').placeholder = isIntern ? 'ML Engineer Intern' : 'Senior ML Engineer';
+  const isI = type === 'internship';
+  document.getElementById('btnJob').className    = `opp-btn ${isI?'':'active-job'}`;
+  document.getElementById('btnIntern').className = `opp-btn ${isI?'active-intern':''}`;
+  document.getElementById('internNote').classList.toggle('show', isI);
+  document.getElementById('yearsWrap').classList.toggle('dim', isI);
+  const pill = document.getElementById('modePill');
+  pill.className = `mode-pill ${isI?'intern':'job'}`;
+  pill.innerHTML = `<i class="fa-solid fa-${isI?'graduation-cap':'briefcase'}"></i><span>${isI?'Internship':'Job'} Mode</span>`;
+  const lbl = isI ? 'Internship' : 'Job';
+  document.getElementById('titleLbl').innerHTML  = `<i class="fa-solid fa-tag"></i> ${lbl} Title <span class="req">*</span>`;
+  document.getElementById('roleLbl').innerHTML   = `<i class="fa-solid fa-user-tie"></i> ${lbl} Role <span class="req">*</span>`;
+  document.getElementById('descLbl').innerHTML   = `<i class="fa-solid fa-align-left"></i> ${lbl} Description <span class="req">*</span>`;
+  document.getElementById('detailsLbl').textContent = `${lbl} Details`;
+  document.getElementById('runBtnTxt').textContent  = `Run Analysis${isI?' (Internship)':''}`;
+  document.getElementById('jobTitle').placeholder   = isI ? 'e.g. ML Engineer Intern' : 'e.g. Senior ML Engineer';
 }
 
-/* ═══════════════════════════════════════════════════
-   DROPZONE
-═══════════════════════════════════════════════════ */
-const MAX_FILE_SIZE = 10 * 1024 * 1024;
+/* ── Dropzone ── */
+const ALLOWED = ['.pdf','.docx','.doc'], MAX_SIZE = 10*1024*1024;
 const dz = document.getElementById('dropzone'), fi = document.getElementById('resumeFile');
-const ALLOWED_TYPES = ['.pdf', '.docx', '.doc'];
-
-function validateFile(file) {
-  if (!file) return false;
-  const ext = '.' + file.name.split('.').pop().toLowerCase();
-  if (!ALLOWED_TYPES.includes(ext)) { showToast('⚠️ Invalid file type. Use PDF, DOCX, or DOC'); return false; }
-  if (file.size > MAX_FILE_SIZE) { showToast('⚠️ File too large. Max size is 10MB'); return false; }
+function validateFile(f) {
+  if(!f) return false;
+  const ext = '.'+f.name.split('.').pop().toLowerCase();
+  if(!ALLOWED.includes(ext)) { showToast('warning','Invalid file type. Use PDF, DOCX, or DOC'); return false; }
+  if(f.size > MAX_SIZE)      { showToast('warning','File too large. Max 10 MB'); return false; }
   return true;
 }
-
-fi.addEventListener('change', e => {
-  const file = e.target.files[0];
-  if (file && validateFile(file)) {
-    document.getElementById('fileName').textContent = '✓ ' + file.name;
-  } else { fi.value = ''; }
-});
-
-dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag'); });
+function setFileName(name) { const el = document.getElementById('fileName'), t = document.getElementById('fileNameText'); el.style.display = 'inline-flex'; t.textContent = name; }
+fi.addEventListener('change', e => { const f = e.target.files[0]; if(f && validateFile(f)) setFileName(f.name); else { fi.value=''; document.getElementById('fileName').style.display='none'; } });
+dz.addEventListener('dragover',  e => { e.preventDefault(); dz.classList.add('drag'); });
 dz.addEventListener('dragleave', () => dz.classList.remove('drag'));
 dz.addEventListener('drop', e => {
-  e.preventDefault(); dz.classList.remove('drag');
-  const file = e.dataTransfer.files[0];
-  if (file && validateFile(file)) {
-    fi.files = e.dataTransfer.files;
-    document.getElementById('fileName').textContent = '✓ ' + file.name;
-  }
+  e.preventDefault(); e.stopPropagation(); dz.classList.remove('drag');
+  const f = e.dataTransfer.files[0];
+  if(f && validateFile(f)) { fi.files = e.dataTransfer.files; setFileName(f.name); }
 });
 
-/* ═══════════════════════════════════════════════════
-   TOAST
-═══════════════════════════════════════════════════ */
-function showToast(message) {
-  const existing = document.querySelector('.toast');
-  if (existing) existing.remove();
-  const toast = document.createElement('div');
-  toast.className = 'toast';
-  toast.textContent = message;
-  document.body.appendChild(toast);
-  setTimeout(() => toast.remove(), 3000);
+/* ── Toast ── */
+function showToast(type, message) {
+  document.querySelectorAll('.toast').forEach(t => t.remove());
+  const icons  = { success:'fa-circle-check', error:'fa-circle-xmark', warning:'fa-triangle-exclamation', info:'fa-circle-info' };
+  const colors = { success:var_css('--c-teal'), error:var_css('--c-red'), warning:var_css('--c-coral'), info:var_css('--c-sky') };
+  const t = document.createElement('div'); t.className = 'toast';
+  t.innerHTML = `<i class="fa-solid ${icons[type]||icons.info}" style="color:${colors[type]||colors.info}"></i> ${message}`;
+  document.body.appendChild(t); setTimeout(() => t.remove(), 3000);
 }
+function var_css(v) { return getComputedStyle(document.documentElement).getPropertyValue(v).trim(); }
 
-/* ═══════════════════════════════════════════════════
-   HELPERS
-═══════════════════════════════════════════════════ */
-function v(x) { return x || '<span style="color:var(--muted)">—</span>'; }
-function bc(x) { return x >= 0.7 ? 'var(--green)' : x >= 0.4 ? 'var(--yellow)' : 'var(--red)'; }
+/* ── Helpers ── */
+function v(x) { return x || '<span style="color:var(--muted2)">—</span>'; }
+function scoreColor(s) { if(s >= 70) return 'var(--green)'; if(s >= 40) return 'var(--c-coral)'; return 'var(--red)'; }
+function scoreGrade(s) {
+  if(s >= 90) return 'Exceptional Match 🏆';
+  if(s >= 75) return 'Strong Match ✅';
+  if(s >= 60) return 'Good Match 👍';
+  if(s >= 45) return 'Moderate Match ⚠️';
+  if(s >= 30) return 'Weak Match 📉';
+  return 'Poor Match ❌';
+}
+function gradeClass(s) { if(s >= 60) return 'great'; if(s >= 40) return 'good'; return 'low'; }
 function re(s, rx, d=0) { const m = s?.match(rx); return m ? parseFloat(m[1]) : d; }
-
 function setLoading(on) {
   const btn = document.getElementById('runBtn');
-  btn.disabled = on;
-  btn.classList.toggle('loading', on);
+  btn.disabled = on; btn.classList.toggle('loading', on);
   document.getElementById('spinner').style.display = on ? 'block' : 'none';
-  if (!on) {
-    const isIntern = document.getElementById('oppType').value === 'internship';
-    document.getElementById('runBtnTxt').textContent = isIntern ? '⚡ Run Pipeline (Internship)' : '⚡ Run Pipeline';
-  } else {
-    document.getElementById('runBtnTxt').textContent = 'Running…';
-  }
+  document.getElementById('runIcon').style.display  = on ? 'none'  : 'inline';
+  document.getElementById('runBtnTxt').textContent = on ? 'Analyzing…' : `Run Analysis${document.getElementById('oppType').value==='internship'?' (Internship)':''}`;
+}
+function initials(name) {
+  if(!name) return '?';
+  const p = name.trim().split(/\s+/);
+  return p.length >= 2 ? (p[0][0]+p[p.length-1][0]).toUpperCase() : name.substring(0,2).toUpperCase();
+}
+function tierBadge(tier) {
+  if(!tier || tier === 0) return '';
+  const t = parseInt(tier);
+  const labels = { 1:'Tier 1 ⭐', 2:'Tier 2', 3:'Tier 3' };
+  return `<span class="tier-badge tier-${t}">${labels[t]||'T'+t}</span>`;
 }
 
-/* ═══════════════════════════════════════════════════
-   SCORE RENDERING
-═══════════════════════════════════════════════════ */
-let gaugeId = 0;
-function makeGaugeSVG(score10, size=100) {
-  const id = 'g' + (++gaugeId);
-  const r = (size/2) - 10, cx = size/2, cy = size/2, c = 2*Math.PI*r;
-  const color = bc(score10/10);
-  return { id, r, c, color, size, cx, cy,
-    html: `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
-      <circle class="gauge-track-big" cx="${cx}" cy="${cy}" r="${r}"/>
-      <circle class="gauge-fill-big" cx="${cx}" cy="${cy}" r="${r}" stroke="${color}" stroke-dasharray="${c}" stroke-dashoffset="${c}" id="${id}"/>
-    </svg>`,
+/* ── Dot grid meter ── */
+function makeDotMeter(score) {
+  const filled = Math.round(score);
+  function dotClass(i) {
+    if(i >= filled) return '';
+    if(i < 40) return 'filled-low';
+    if(i < 70) return 'filled-mid';
+    return 'filled-high';
+  }
+  const dots = Array.from({length:100}, (_,i) => `<div class="dot-cell ${dotClass(i)}" id="dm-dot-${i}"></div>`).join('');
+  return {
+    score, filled, html: dots,
     animate(delay=200) {
-      setTimeout(() => {
-        const el = document.getElementById(id);
-        if(el) el.style.strokeDashoffset = String(c*(1-score10/10));
-      }, delay);
+      for(let i = 0; i < filled; i++) {
+        setTimeout(() => { const el = document.getElementById(`dm-dot-${i}`); if(el) el.className = `dot-cell ${dotClass(i)}`; }, delay + i*16);
+      }
     }
   };
 }
 
-function renderRightPanel(data) {
-  const fs = data.final_score || {}, bd = fs.breakdown || {};
-  const ss = data.skill_score, es = data.experience_score;
-  const edu = data.education_score, ach = data.achievement_score;
-  const soc = data.social_score, sem = data.semantic_score;
-  const isIntern = data.opportunity_type === 'internship';
-  const pi = data.parsed_resume?.personal_info || {};
+/* ── Right panel ── */
+function renderRight(data) {
+  const fs = data.final_score||{}, bd = fs.breakdown||{};
+  const ss  = data.skill_score,      es  = data.experience_score;
+  const edu = data.education_score,  ach = data.achievement_score;
+  const soc = data.social_score,     sem = data.semantic_score;
+  const ps  = data.project_score;
+  const isI = data.opportunity_type === 'internship';
+  const pi  = data.parsed_resume?.personal_info || {};
   const score = fs.total_score || 0;
-  const color = bc(score / 100);
+  const dot = makeDotMeter(score);
+  const gc  = gradeClass(score);
+  const col = scoreColor(score);
 
-  const bg = makeGaugeSVG(score / 10, 100);
-
-  const WDEFS = isIntern ? [
-    { k:'skill', lbl:'Skill Match', col:'var(--accent2)' },
-    { k:'semantic', lbl:'Semantic Fit', col:'#a78bfa' },
-    { k:'achievement', lbl:'Achievements', col:'var(--green)' },
-    { k:'education', lbl:'Education', col:'var(--pink)' },
-    { k:'social', lbl:'Social', col:'#84cc16' },
-    { k:'experience', lbl:'Experience', col:'var(--yellow)' },
+  /* Breakdown row definitions — ordered by weight (highest first) */
+  const WDEFS = isI ? [
+    { k:'skill',       lbl:'Skills',       icon:'fa-code',           col:'#0075a8', bg:'rgba(92,198,255,.12)'   },
+    { k:'project',     lbl:'Projects',     icon:'fa-rocket',         col:'#c05a00', bg:'rgba(255,140,66,.12)'   },
+    { k:'education',   lbl:'Education',    icon:'fa-graduation-cap', col:'#7c1fa8', bg:'rgba(222,138,255,.12)'  },
+    { k:'achievement', lbl:'Achievements', icon:'fa-trophy',         col:'#5a6e00', bg:'rgba(235,255,138,.25)'  },
+    { k:'experience',  lbl:'Experience',   icon:'fa-briefcase',      col:'#c0392b', bg:'rgba(255,138,138,.12)'  },
+    { k:'social',      lbl:'Social',       icon:'fa-globe',          col:'#b5006b', bg:'rgba(255,92,173,.1)'    },
+    { k:'semantic',    lbl:'Semantic Fit', icon:'fa-wave-square',    col:'#5c00bb', bg:'rgba(127,0,255,.08)'    },
   ] : [
-    { k:'skill', lbl:'Skill Match', col:'var(--accent2)' },
-    { k:'experience', lbl:'Experience', col:'var(--yellow)' },
-    { k:'semantic', lbl:'Semantic Fit', col:'#a78bfa' },
-    { k:'education', lbl:'Education', col:'var(--pink)' },
-    { k:'achievement', lbl:'Achievements', col:'var(--green)' },
-    { k:'social', lbl:'Social', col:'#84cc16' },
+    { k:'skill',       lbl:'Skills',       icon:'fa-code',           col:'#0075a8', bg:'rgba(92,198,255,.12)'   },
+    { k:'experience',  lbl:'Experience',   icon:'fa-briefcase',      col:'#c0392b', bg:'rgba(255,138,138,.12)'  },
+    { k:'project',     lbl:'Projects',     icon:'fa-rocket',         col:'#c05a00', bg:'rgba(255,140,66,.12)'   },
+    { k:'education',   lbl:'Education',    icon:'fa-graduation-cap', col:'#7c1fa8', bg:'rgba(222,138,255,.12)'  },
+    { k:'achievement', lbl:'Achievements', icon:'fa-trophy',         col:'#5a6e00', bg:'rgba(235,255,138,.25)'  },
+    { k:'social',      lbl:'Social',       icon:'fa-globe',          col:'#b5006b', bg:'rgba(255,92,173,.1)'    },
+    { k:'semantic',    lbl:'Semantic Fit', icon:'fa-wave-square',    col:'#5c00bb', bg:'rgba(127,0,255,.08)'    },
   ];
 
-  const weightRows = WDEFS.map(w => {
-    const raw = bd[w.k]?.raw_score || 0;
-    const contrib = bd[w.k]?.weighted_contribution || 0;
-    return `<div class="wt-row" title="${w.lbl}: Raw ${raw.toFixed(1)} / +${contrib.toFixed(1)}">
-      <div class="wt-dot" style="background:${w.col}"></div>
-      <span class="wt-lbl">${w.lbl}</span>
-      <div class="wt-bar"><div class="wt-fill" id="wf-${w.k}" style="width:0%;background:${w.col}"></div></div>
-      <span class="wt-num" style="color:${bc(raw/10)}">${raw.toFixed(1)}</span>
-      <span class="wt-pts">+${contrib.toFixed(1)}</span>
+  const bkdRows = WDEFS.map(w => {
+    const raw    = bd[w.k]?.raw_score            || 0;
+    const contrib= bd[w.k]?.weighted_contribution || 0;
+    const sc = scoreColor(raw * 10);
+    return `<div class="bkd-row">
+      <div class="bkd-bar-bg" id="bbar-${w.k}" style="width:0%;background:${w.bg}"></div>
+      <div class="bkd-icon" style="background:${w.bg}"><i class="fa-solid ${w.icon}" style="color:${w.col}"></i></div>
+      <span class="bkd-lbl">${w.lbl}</span>
+      <span class="bkd-score-pill" style="color:${sc}">${raw.toFixed(1)}</span>
+      <span class="bkd-contrib">+${contrib.toFixed(1)}</span>
     </div>`;
   }).join('');
 
-  const miniData = [
-    { id:'mc-sk', cls:'mc-skill', title:'02 · SKILLS', score:ss?.score||0, col:'var(--accent2)' },
-    { id:'mc-ex', cls:'mc-exp', title:'03 · EXPERIENCE', score:es?.score||0, col:'var(--yellow)' },
-    { id:'mc-ed', cls:'mc-edu', title:'04 · EDUCATION', score:edu?.score||0,col:'var(--pink)' },
-    { id:'mc-ac', cls:'mc-ach', title:'05 · ACHIEVEMENTS',score:ach?.score||0,col:'var(--green)' },
-    { id:'mc-so', cls:'mc-social', title:'06 · SOCIAL', score:soc?.score||0,col:'#84cc16' },
-    { id:'mc-sm', cls:'mc-sem', title:'07 · SEMANTIC', score:sem?.score||0,col:'#a78bfa' },
+  /* Component tiles — 8 items in 4×2 grid */
+  const COMPS = [
+    { id:'ct-sk', icon:'fa-code',           col:'#0075a8', bg:'rgba(92,198,255,.12)',  lbl:'SKILLS',    score: ss?.score  || 0 },
+    { id:'ct-ex', icon:'fa-briefcase',      col:'#c0392b', bg:'rgba(255,138,138,.12)', lbl:'EXP',       score: es?.score  || 0 },
+    { id:'ct-pr', icon:'fa-rocket',         col:'#c05a00', bg:'rgba(255,140,66,.12)',  lbl:'PROJECTS',  score: ps?.score  || 0 },
+    { id:'ct-ed', icon:'fa-graduation-cap', col:'#7c1fa8', bg:'rgba(222,138,255,.12)', lbl:'EDU',       score: edu?.score || 0 },
+    { id:'ct-ac', icon:'fa-trophy',         col:'#5a6e00', bg:'rgba(235,255,138,.25)', lbl:'ACHIEV',    score: ach?.score || 0 },
+    { id:'ct-so', icon:'fa-globe',          col:'#b5006b', bg:'rgba(255,92,173,.1)',   lbl:'SOCIAL',    score: soc?.score || 0 },
+    { id:'ct-sm', icon:'fa-wave-square',    col:'#5c00bb', bg:'rgba(127,0,255,.08)',   lbl:'SEMANTIC',  score: sem?.score || 0 },
+    { id:'ct-fn', icon:'fa-calculator',     col:'#334155', bg:'rgba(51,65,85,.06)',    lbl:'FINAL/10',  score: score / 10      },
   ];
-  const miniHTML = miniData.map(m => `
-    <div class="mini-card ${m.cls}" title="${m.title}: ${m.score.toFixed(1)}/10">
-      <div class="mc-title">${m.title}</div>
-      <div class="mc-score-val" style="color:${bc(m.score/10)}">${m.score.toFixed(1)}</div>
-      <div class="mc-bar"><div class="mc-bar-fill" id="${m.id}" style="width:0%;background:${m.col}"></div></div>
-    </div>`).join('');
+  const compHTML = COMPS.map(c => {
+    const segs = 10, filled = Math.round(c.score);
+    const dots = Array.from({length:segs}, (_,i) =>
+      `<div class="comp-seg-dot" id="${c.id}d${i}" style="background:${i < filled ? c.col : 'var(--bg2)'}"></div>`
+    ).join('');
+    return `<div class="comp-tile">
+      <div class="comp-tile-top">
+        <div class="comp-tile-icon" style="background:${c.bg}"><i class="fa-solid ${c.icon}" style="color:${c.col}"></i></div>
+        <div class="comp-tile-val" style="color:${scoreColor(c.score*10)}">${c.score.toFixed(1)}</div>
+      </div>
+      <div class="comp-tile-lbl">${c.lbl}</div>
+      <div class="comp-seg" id="${c.id}seg" style="opacity:0">${dots}</div>
+    </div>`;
+  }).join('');
 
+  /* Social rows */
   const gh = soc?.github_data, lc = soc?.leetcode_data, cf = soc?.codeforces_data;
   const ghS = re(soc?.reasoning, /GitHub score: ([\d.]+)/);
   const lcS = re(soc?.reasoning, /LeetCode score: ([\d.]+)/);
   const cfS = re(soc?.reasoning, /Codeforces score: ([\d.]+)/);
-  const socCards = `
-    <div class="soc-card">${gh ? `<div class="soc-hdr"><span class="soc-icon">⚙️</span><span class="soc-name">GitHub</span><span class="soc-val" style="color:${bc(ghS/10)}">${ghS.toFixed(1)}</span></div><div class="soc-stat">📦 ${gh.public_repos||0} repos · ⭐ ${gh.total_stars||0}</div>` : `<div class="soc-hdr"><span class="soc-icon">⚙️</span><span class="soc-name">GitHub</span></div><div class="soc-na">Not found</div>`}</div>
-    <div class="soc-card">${lc ? `<div class="soc-hdr"><span class="soc-icon">💡</span><span class="soc-name">LeetCode</span><span class="soc-val" style="color:${bc(lcS/10)}">${lcS.toFixed(1)}</span></div><div class="soc-stat">✅ ${lc.total_solved||0} solved · 🔴 ${lc.hard_solved||0} hard</div>` : `<div class="soc-hdr"><span class="soc-icon">💡</span><span class="soc-name">LeetCode</span></div><div class="soc-na">Not found</div>`}</div>
-    <div class="soc-card">${cf ? `<div class="soc-hdr"><span class="soc-icon">⚡</span><span class="soc-name">CF</span><span class="soc-val" style="color:${bc(cfS/10)}">${cfS.toFixed(1)}</span></div><div class="soc-stat">📊 ${cf.rating||0} rating · ${cf.rank||'Unrated'}</div>` : `<div class="soc-hdr"><span class="soc-icon">⚡</span><span class="soc-name">CF</span></div><div class="soc-na">Not found</div>`}</div>`;
+  const socRows = [
+    { platform:'GitHub',     icon:'fa-brands fa-github', data:gh, scoreVal:ghS, stat:gh?`${gh.public_repos||0} repos · ${gh.total_stars||0} stars · ${gh.followers||0} followers`:null, bg:'#F1F5F9', col:'#334155' },
+    { platform:'LeetCode',   icon:'fa-solid fa-code',    data:lc, scoreVal:lcS, stat:lc?`${lc.total_solved||0} solved · ${lc.hard_solved||0} hard · rank #${lc.ranking||'?'}`:null,   bg:'rgba(255,138,138,.12)', col:'#c0392b' },
+    { platform:'Codeforces', icon:'fa-solid fa-bolt',    data:cf, scoreVal:cfS, stat:cf?`${cf.rating||0} rating · ${cf.rank||'Unrated'}`:null,              bg:'rgba(92,198,255,.12)',  col:'#0075a8' },
+  ].map(s => `<div class="soc-row">
+    <div class="soc-icon-sq" style="background:${s.bg}"><i class="${s.icon}" style="color:${s.col}"></i></div>
+    <div class="soc-info">
+      <div class="soc-plat">${s.platform}</div>
+      ${s.data ? `<div class="soc-stat-line">${s.stat}</div>` : `<div class="soc-na-txt">Not found / not linked</div>`}
+    </div>
+    ${s.data ? `<div class="soc-score-num" style="color:${scoreColor(s.scoreVal*10)}">${s.scoreVal.toFixed(1)}</div>` : ''}
+  </div>`).join('');
+
+  /* Project insight strip */
+  const psUsed    = ps?.skills_used_in_projects    || [];
+  const psMissing = ps?.required_skills_missing_from_projects || [];
+  const projectInsight = ps ? `
+    <div class="section-label" style="margin-bottom:.4rem"><i class="fa-solid fa-rocket" style="color:var(--c-orange)"></i> Project Insight</div>
+    <div style="background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:.62rem .78rem;margin-bottom:.85rem;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.32rem;margin-bottom:.42rem;">
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:.38rem .52rem">
+          <div style="font-family:var(--ff-mono);font-size:.5rem;color:var(--muted2);font-weight:600;text-transform:uppercase;letter-spacing:.06em">Quality</div>
+          <div style="font-family:var(--ff-display);font-size:.95rem;font-weight:800;color:${scoreColor((ps.quality_score||0)*10)}">${(ps.quality_score||0).toFixed(1)}/10</div>
+        </div>
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:.38rem .52rem">
+          <div style="font-family:var(--ff-mono);font-size:.5rem;color:var(--muted2);font-weight:600;text-transform:uppercase;letter-spacing:.06em">Tech Match</div>
+          <div style="font-family:var(--ff-display);font-size:.95rem;font-weight:800;color:${scoreColor((ps.tech_match_score||0)*10)}">${(ps.tech_match_score||0).toFixed(1)}/10</div>
+        </div>
+      </div>
+      ${psUsed.length ? `<div style="font-family:var(--ff-mono);font-size:.53rem;color:var(--green);font-weight:600;margin-bottom:.25rem;text-transform:uppercase;letter-spacing:.05em">Used in projects</div><div style="display:flex;flex-wrap:wrap;gap:.22rem;margin-bottom:.32rem">${psUsed.slice(0,10).map(s=>`<span class="chip chip-m" style="font-size:.55rem">${s}</span>`).join('')}</div>`:''} 
+      ${psMissing.length ? `<div style="font-family:var(--ff-mono);font-size:.53rem;color:var(--red);font-weight:600;margin-bottom:.25rem;text-transform:uppercase;letter-spacing:.05em">Not in projects</div><div style="display:flex;flex-wrap:wrap;gap:.22rem">${psMissing.slice(0,8).map(s=>`<span class="chip chip-x" style="font-size:.55rem">${s}</span>`).join('')}</div>`:''}
+    </div>` : '';
 
   document.getElementById('rightEmpty').style.display = 'none';
   const rc = document.getElementById('rightContent');
   rc.style.display = 'block';
   rc.innerHTML = `
-    <div class="big-score-card">
-      <div class="big-score-top">
-        <div class="big-gauge-wrap">
-          ${bg.html}
-          <div class="big-gauge-center">
-            <span class="big-score-num" style="color:${color}" id="bigNum">0</span>
-            <span class="big-score-den">/ 100</span>
-          </div>
-        </div>
-        <div class="score-right">
-          <div class="score-label" style="color:${color}">${bd.label||'—'}</div>
-          <div class="score-name">${pi.full_name||'Unknown Candidate'}</div>
-          <span class="score-opp ${isIntern?'intern':'job'}">${isIntern?'🎓 Internship':'💼 Full-Time'}</span>
-        </div>
+    <div class="cand-header">
+      <div class="cand-avatar${isI?' intern':''}">${initials(pi.full_name)}</div>
+      <div>
+        <div class="cand-name">${pi.full_name || 'Unknown Candidate'}</div>
+        <div class="cand-meta">${isI?'Internship':'Full-Time'} · ${pi.location || 'Location unknown'}</div>
       </div>
-      <div class="weight-grid">${weightRows}</div>
     </div>
-    <div class="section-label">📊 Component Scores</div>
-    <div class="mini-cards">${miniHTML}</div>
-    ${sem?.reasoning ? `<div class="sem-box"><strong>🧠 AI Insight:</strong> ${sem.reasoning}</div>` : ''}
-    <div class="section-label" style="margin-top:.8rem">🌐 Social Profiles</div>
-    <div class="social-row">${socCards}</div>`;
 
+    <div class="dot-meter-wrap">
+      <div class="dot-meter-top">
+        <div class="dot-meter-score-block">
+          <span class="dot-big-num" style="color:${col}" id="dotBigNum">0</span>
+          <span class="dot-denom">/ 100</span>
+        </div>
+        <span class="dot-grade-badge ${gc}">${scoreGrade(score)}</span>
+      </div>
+      <div class="dot-grid" id="dotGrid">${dot.html}</div>
+      <div class="dot-meter-legend">
+        <div class="dot-legend-item"><div class="dot-legend-swatch" style="background:var(--red)"></div>0–40</div>
+        <div class="dot-legend-item"><div class="dot-legend-swatch" style="background:var(--c-coral)"></div>40–70</div>
+        <div class="dot-legend-item"><div class="dot-legend-swatch" style="background:var(--green)"></div>70–100</div>
+        <div class="dot-legend-item" style="margin-left:auto"><div class="dot-legend-swatch" style="background:var(--bg2)"></div>remaining</div>
+      </div>
+    </div>
+
+    <div class="section-label"><i class="fa-solid fa-bars-staggered" style="color:var(--c-sky)"></i> Breakdown</div>
+    <div class="breakdown-list">${bkdRows}</div>
+
+    <div class="section-label"><i class="fa-solid fa-grid-2" style="color:var(--c-pink)"></i> Components (8 agents)</div>
+    <div class="comp-grid">${compHTML}</div>
+
+    ${projectInsight}
+
+    ${sem?.reasoning ? `<div class="insight-box"><div class="insight-box-hdr"><i class="fa-solid fa-wave-square"></i> Semantic Fit</div>${sem.reasoning}</div>` : ''}
+
+    <div class="section-label" style="margin-bottom:.5rem"><i class="fa-solid fa-globe" style="color:var(--c-teal)"></i> Social Profiles</div>
+    <div class="social-strip">${socRows}</div>`;
+
+  dot.animate(200);
+
+  /* Animate score counter */
+  let cur = 0;
+  const step = Math.max(0.1, score / 60);
+  const iv = setInterval(() => {
+    cur = Math.min(cur + step, score);
+    const el = document.getElementById('dotBigNum');
+    if(el) el.textContent = cur.toFixed(1);
+    if(cur >= score) clearInterval(iv);
+  }, 16);
+
+  /* Animate bars and segments */
   setTimeout(() => {
-    bg.animate(100);
-    let cur = 0;
-    const step = Math.max(0.1, score / 60);
-    const iv = setInterval(() => {
-      cur = Math.min(cur+step, score);
-      const el = document.getElementById('bigNum');
-      if(el) el.textContent = cur.toFixed(1);
-      if(cur >= score) clearInterval(iv);
-    }, 16);
     WDEFS.forEach(w => {
-      const el = document.getElementById(`wf-${w.k}`);
-      if(el) el.style.width = Math.min(100, (bd[w.k]?.raw_score||0)*10) + '%';
+      const el = document.getElementById(`bbar-${w.k}`);
+      if(el) el.style.cssText += `width:${Math.min(100,(bd[w.k]?.raw_score||0)*10)}%;transition:width 1.5s cubic-bezier(.4,0,.2,1);`;
     });
-    miniData.forEach(m => {
-      const el = document.getElementById(m.id);
-      if(el) el.style.width = Math.min(100, m.score*10) + '%';
+    COMPS.forEach(c => {
+      const seg = document.getElementById(`${c.id}seg`);
+      if(seg) { seg.style.opacity='0'; setTimeout(()=>{ seg.style.transition='opacity .4s'; seg.style.opacity='1'; },200); }
     });
   }, 300);
 }
 
-/* ═══════════════════════════════════════════════════
-   RESULTS TABS
-═══════════════════════════════════════════════════ */
+/* ── Results tabs ── */
 function renderResults(data) {
   const r = data.parsed_resume || {}, pi = r.personal_info || {};
   const ss = data.skill_score;
+  const ps = data.project_score;
   const mNorm = new Set((ss?.matched_skills||[]).map(s => s.toLowerCase().replace(/[\s\-_.]+/g,'')));
+  const skillsUsedInProjects = new Set((ps?.skills_used_in_projects||[]).map(s => s.toLowerCase().replace(/[\s\-_.]+/g,'')));
 
-  const skH = (r.skills||[]).map(s =>
-    `<span class="chip ${mNorm.has(s.toLowerCase().replace(/[\s\-_.]+/g,''))?'chip-m':'chip-d'}">${s}</span>`
-  ).join('') || '<span style="color:var(--muted);font-size:.7rem">No skills detected</span>';
+  /* All skills — highlight matched + used-in-projects */
+  const skH = (r.skills||[]).map(s => {
+    const n = s.toLowerCase().replace(/[\s\-_.]+/g,'');
+    const isMatch = mNorm.has(n);
+    const inProj  = skillsUsedInProjects.has(n);
+    let cls = isMatch ? 'chip-m' : 'chip-d';
+    let extra = inProj ? ' title="Used in a project"' : '';
+    let icon  = inProj ? ' <i class="fa-solid fa-rocket" style="font-size:.5rem;opacity:.7"></i>' : '';
+    return `<span class="chip ${cls}"${extra}>${s}${icon}</span>`;
+  }).join('') || '<span style="color:var(--muted2);font-size:.72rem">No skills detected</span>';
 
-  const matchH = (ss?.matched_skills||[]).map(s=>`<span class="chip chip-m">${s}</span>`).join('')
-    || '<span style="color:var(--muted);font-size:.7rem">None matched</span>';
-  const missH = (ss?.missing_skills||[]).map(s=>`<span class="chip chip-x">${s}</span>`).join('')
-    || '<span style="color:var(--green);font-size:.7rem">✓ All skills matched!</span>';
+  const matchH = (ss?.matched_skills||[]).map(s => `<span class="chip chip-m">${s}</span>`).join('')
+    || '<span style="color:var(--muted2);font-size:.72rem">None matched</span>';
+  const missH = (ss?.missing_skills||[]).map(s => `<span class="chip chip-x">${s}</span>`).join('')
+    || '<span style="color:var(--green);font-size:.72rem;font-weight:500">✓ All required skills matched</span>';
 
+  /* Experience with tier badge */
   const exH = (r.experience||[]).map(e => `
     <div class="tl-item">
       <div class="tl-title">${e.position||'Untitled'}</div>
-      <div class="tl-sub">${e.company||'Unknown'}${e.is_current?' · <span style="color:var(--green)">Current</span>':''}</div>
-      <div class="tl-date">📅 ${e.start_date||'?'} → ${e.end_date||'Present'}</div>
-      ${e.description?`<div class="tl-desc">${e.description}</div>`:''}
-    </div>`).join('') || '<p style="color:var(--muted);font-size:.75rem">No experience listed</p>';
+      <div class="tl-sub">
+        ${e.company||'Unknown'}
+        ${tierBadge(e.company_tier)}
+        ${e.is_current?'<span style="color:var(--green);font-weight:500;font-size:.65rem">● Current</span>':''}
+      </div>
+      <div class="tl-date"><i class="fa-regular fa-calendar"></i>${e.start_date||'?'} → ${e.end_date||'Present'}</div>
+      ${e.description ? `<div class="tl-desc">${e.description}</div>` : ''}
+    </div>`).join('') || '<p style="color:var(--muted2);font-size:.75rem">No experience listed</p>';
 
+  /* Education with tier badge */
   const edH = (r.education||[]).map(e => `
     <div class="tl-item edu">
       <div class="tl-title">${e.degree||'Degree'}${e.field?' — '+e.field:''}</div>
-      <div class="tl-sub">🏫 ${e.institution||e.institute||'Unknown'}</div>
-      <div class="tl-date">🎓 ${e.graduation_date||'?'}${e.gpa?' · GPA: '+e.gpa:''}</div>
-    </div>`).join('') || '<p style="color:var(--muted);font-size:.75rem">No education listed</p>';
+      <div class="tl-sub">
+        <i class="fa-solid fa-building-columns" style="font-size:.68rem"></i>
+        ${e.institution||e.institute||'Unknown'}
+        ${tierBadge(e.institution_tier)}
+      </div>
+      <div class="tl-date"><i class="fa-regular fa-calendar"></i>${e.graduation_date||'?'}${e.gpa?' · GPA: '+e.gpa:''}</div>
+    </div>`).join('') || '<p style="color:var(--muted2);font-size:.75rem">No education listed</p>';
 
-  const prH = (r.projects||[]).map(p => `
-    <div class="proj-card">
-      <div class="proj-name">🚀 ${p.name||'Untitled'}</div>
-      <div class="proj-type">${p.type||''}</div>
-      ${p.description?`<div class="proj-desc">${p.description}</div>`:''}
-    </div>`).join('') || '<p style="color:var(--muted);font-size:.75rem">No projects listed</p>';
+  /* Projects — with tech chips coloured by whether they match required skills */
+  const requiredNorm = new Set(
+    (data.job_input?.skills_required||[]).map(s => s.toLowerCase().replace(/[\s\-_.]+/g,''))
+  );
+  const prH = (r.projects||[]).map(p => {
+    const techChips = (p.technologies||[]).map(t => {
+      const tn = t.toLowerCase().replace(/[\s\-_.]+/g,'');
+      const isReq = requiredNorm.has(tn) || [...requiredNorm].some(r2 => tn.includes(r2) || r2.includes(tn));
+      return `<span class="chip ${isReq?'chip-m':'chip-p'}" style="font-size:.56rem">${t}</span>`;
+    }).join('');
+    return `<div class="proj-card">
+      <div class="proj-name">${p.name||'Untitled'}</div>
+      ${p.type ? `<div class="proj-type">${p.type}</div>` : ''}
+      ${p.description ? `<div class="proj-desc">${p.description}</div>` : ''}
+      ${techChips ? `<div class="proj-techs">${techChips}</div>` : ''}
+    </div>`;
+  }).join('') || '<p style="color:var(--muted2);font-size:.75rem">No projects listed</p>';
+
+  /* Project score summary panel */
+  const psSummary = ps ? `
+    <div class="proj-score-panel">
+      <div class="proj-score-hdr">
+        <span class="proj-score-title"><i class="fa-solid fa-rocket" style="margin-right:.3rem;color:var(--c-orange)"></i>Project Score</span>
+        <span class="proj-score-val" style="color:${scoreColor((ps.score||0)*10)}">${(ps.score||0).toFixed(1)}<span style="font-family:var(--ff-mono);font-size:.6rem;color:var(--muted2);font-weight:400">/10</span></span>
+      </div>
+      <div class="proj-sub-scores">
+        <div class="proj-sub-item">
+          <div class="proj-sub-lbl">Quality (LLM)</div>
+          <div class="proj-sub-val" style="color:${scoreColor((ps.quality_score||0)*10)}">${(ps.quality_score||0).toFixed(1)}</div>
+        </div>
+        <div class="proj-sub-item">
+          <div class="proj-sub-lbl">Tech Match</div>
+          <div class="proj-sub-val" style="color:${scoreColor((ps.tech_match_score||0)*10)}">${(ps.tech_match_score||0).toFixed(1)}</div>
+        </div>
+      </div>
+      ${ps.reasoning ? `<div style="font-size:.65rem;color:var(--muted);line-height:1.6;margin-top:.2rem">${ps.reasoning.slice(0,220)}…</div>` : ''}
+    </div>` : '';
 
   const acH = [
-    ...(r.achievements||[]).map(a=>`<div class="tl-item ach"><div class="tl-title">🏅 ${a.title||'Achievement'}</div>${a.platform?`<div class="tl-sub">${a.platform}</div>`:''}</div>`),
-    ...(r.certifications||[]).map(c=>`<div class="tl-item" style="border-left-color:var(--yellow)"><div class="tl-title">📜 ${c}</div></div>`),
-  ].join('') || '<p style="color:var(--muted);font-size:.75rem">No achievements</p>';
+    ...(r.achievements||[]).map(a => `<div class="tl-item ach"><div class="tl-title">${a.title||'Achievement'}</div>${a.platform?`<div class="tl-sub">${a.platform}</div>`:''}</div>`),
+    ...(r.certifications||[]).map(c => `<div class="tl-item" style="border-left-color:var(--c-lime)"><div class="tl-title"><i class="fa-solid fa-certificate" style="font-size:.73rem;margin-right:.28rem;color:#5a6e00"></i>${c}</div></div>`),
+  ].join('') || '<p style="color:var(--muted2);font-size:.75rem">No achievements or certifications</p>';
 
-  const links = [['🔗 LinkedIn',pi.linkedin],['⚙️ GitHub',pi.github],['💡 LeetCode',pi.leetcode],['⚡ Codeforces',pi.codeforces]].filter(([,u])=>u);
+  const links = [
+    ['fa-brands fa-linkedin','LinkedIn', pi.linkedin],
+    ['fa-brands fa-github',  'GitHub',   pi.github],
+    ['fa-solid fa-code',     'LeetCode', pi.leetcode],
+    ['fa-solid fa-bolt',     'Codeforces',pi.codeforces],
+    ['fa-solid fa-globe',    'Website',  pi.website],
+  ].filter(([,,u]) => u);
 
   document.getElementById('resultsArea').innerHTML = `
     <div class="res-tabs">
-      <div class="res-tab active" onclick="rt('contact',this)">👤 Contact</div>
-      <div class="res-tab" onclick="rt('summary',this)">📝 Summary</div>
-      <div class="res-tab" onclick="rt('skills',this)">🔍 Skills</div>
-      <div class="res-tab" onclick="rt('exp',this)">💼 Experience</div>
-      <div class="res-tab" onclick="rt('edu',this)">🎓 Education</div>
-      <div class="res-tab" onclick="rt('proj',this)">🚀 Projects</div>
-      <div class="res-tab" onclick="rt('ach',this)">🏆 Achievements</div>
-      <div class="res-tab" onclick="rt('json',this)">{ } JSON</div>
+      <div class="res-tab active" onclick="rt('contact',this)"><i class="fa-solid fa-user"></i> Contact</div>
+      <div class="res-tab" onclick="rt('summary',this)"><i class="fa-solid fa-file-lines"></i> Summary</div>
+      <div class="res-tab" onclick="rt('skills',this)"><i class="fa-solid fa-code"></i> Skills</div>
+      <div class="res-tab" onclick="rt('exp',this)"><i class="fa-solid fa-briefcase"></i> Experience</div>
+      <div class="res-tab" onclick="rt('edu',this)"><i class="fa-solid fa-graduation-cap"></i> Education</div>
+      <div class="res-tab" onclick="rt('proj',this)"><i class="fa-solid fa-rocket"></i> Projects</div>
+      <div class="res-tab" onclick="rt('ach',this)"><i class="fa-solid fa-trophy"></i> Achievements</div>
+      <div class="res-tab" onclick="rt('json',this)"><i class="fa-solid fa-brackets-curly"></i> JSON</div>
     </div>
+
     <div class="res-tab-content active" id="tc-contact">
       <div class="info-grid">
-        <div class="info-cell"><label>👤 Name</label><span>${v(pi.full_name)}</span></div>
-        <div class="info-cell"><label>📧 Email</label><span>${v(pi.email)}</span></div>
-        <div class="info-cell"><label>📱 Phone</label><span>${v(pi.phone)}</span></div>
-        <div class="info-cell"><label>📍 Location</label><span>${v(pi.location)}</span></div>
-        ${links.map(([ic,u])=>`<div class="info-cell" style="grid-column:1/-1"><label>${ic}</label><a href="${u}" target="_blank">${u}</a></div>`).join('')}
+        <div class="info-cell"><label><i class="fa-solid fa-user"></i> Full Name</label><span>${v(pi.full_name)}</span></div>
+        <div class="info-cell"><label><i class="fa-solid fa-envelope"></i> Email</label><span style="font-size:.73rem">${v(pi.email)}</span></div>
+        <div class="info-cell"><label><i class="fa-solid fa-phone"></i> Phone</label><span>${v(pi.phone)}</span></div>
+        <div class="info-cell"><label><i class="fa-solid fa-location-dot"></i> Location</label><span>${v(pi.location)}</span></div>
+        ${links.map(([ic,nm,u]) => `<div class="info-cell" style="grid-column:1/-1"><label><i class="${ic}"></i> ${nm}</label><a href="${u}" target="_blank">${u}</a></div>`).join('')}
       </div>
     </div>
-    <div class="res-tab-content" id="tc-summary"><div class="sum-box">${r.professional_summary||'<span style="color:var(--muted)">No summary.</span>'}</div></div>
+
+    <div class="res-tab-content" id="tc-summary">
+      <div class="sum-box">${r.professional_summary || '<span style="color:var(--muted2)">No summary extracted.</span>'}</div>
+    </div>
+
     <div class="res-tab-content" id="tc-skills">
-      <div style="margin-bottom:.6rem">
-        <div style="font-family:var(--mono);font-size:.6rem;color:var(--muted2);margin-bottom:.35rem">📋 ALL SKILLS</div>
+      <div style="margin-bottom:.8rem">
+        <div style="font-family:var(--ff-mono);font-size:.56rem;color:var(--muted);margin-bottom:.4rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase">
+          All Resume Skills
+          <span style="font-weight:400;text-transform:none;font-size:.52rem;margin-left:.4rem">🚀 = used in a project</span>
+        </div>
         <div class="skill-chips">${skH}</div>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.7rem;margin-top:.7rem">
-        <div><div style="font-family:var(--mono);font-size:.6rem;color:var(--green);margin-bottom:.35rem">✅ MATCHED</div><div class="skill-chips">${matchH}</div></div>
-        <div><div style="font-family:var(--mono);font-size:.6rem;color:var(--red);margin-bottom:.35rem">❌ MISSING</div><div class="skill-chips">${missH}</div></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.8rem;margin-top:.5rem">
+        <div>
+          <div style="font-family:var(--ff-mono);font-size:.56rem;color:var(--green);margin-bottom:.4rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase">✓ Matched</div>
+          <div class="skill-chips">${matchH}</div>
+        </div>
+        <div>
+          <div style="font-family:var(--ff-mono);font-size:.56rem;color:var(--red);margin-bottom:.4rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase">✗ Missing</div>
+          <div class="skill-chips">${missH}</div>
+        </div>
       </div>
     </div>
+
     <div class="res-tab-content" id="tc-exp"><div class="tl-list">${exH}</div></div>
     <div class="res-tab-content" id="tc-edu"><div class="tl-list">${edH}</div></div>
-    <div class="res-tab-content" id="tc-proj"><div class="proj-grid">${prH}</div></div>
+
+    <div class="res-tab-content" id="tc-proj">
+      ${psSummary}
+      <div style="font-family:var(--ff-mono);font-size:.54rem;color:var(--muted2);margin-bottom:.4rem;font-weight:600;letter-spacing:.05em;text-transform:uppercase">
+        Tech stack: <span style="color:var(--green)">green = required skill</span> · <span style="color:#c05a00">orange = other tech</span>
+      </div>
+      <div class="proj-grid">${prH}</div>
+    </div>
+
     <div class="res-tab-content" id="tc-ach"><div class="tl-list">${acH}</div></div>
+
     <div class="res-tab-content" id="tc-json">
-      <button class="copy-btn" onclick="cpJ()">📋 Copy JSON</button>
+      <button class="copy-btn" onclick="cpJ()"><i class="fa-regular fa-copy"></i> Copy JSON</button>
       <div class="json-box" id="jbox">${JSON.stringify(data,null,2)}</div>
     </div>
-    ${(data.errors||[]).length ? `<div class="err-bar">${data.errors.map(e=>`⚠ ${e}`).join('<br/>')}</div>` : ''}`;
+    ${(data.errors||[]).length ? `<div class="err-bar"><i class="fa-solid fa-triangle-exclamation"></i><div>${data.errors.map(e => `${e}`).join('<br/>')}</div></div>` : ''}`;
 }
 
 function rt(id, el) {
   document.querySelectorAll('.res-tab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.res-tab-content').forEach(t => t.classList.remove('active'));
   el.classList.add('active');
-  const panel = document.getElementById(`tc-${id}`);
-  if(panel) panel.classList.add('active');
+  const p = document.getElementById(`tc-${id}`); if(p) p.classList.add('active');
 }
-
 function cpJ() {
-  const jbox = document.getElementById('jbox');
-  if(!jbox) return;
-  navigator.clipboard.writeText(jbox.textContent)
-    .then(() => {
-      const b = document.querySelector('.copy-btn');
-      if(b) { b.textContent = '✅ Copied!'; setTimeout(() => b.textContent = '📋 Copy JSON', 2000); }
-      showToast('📋 JSON copied!');
-    })
-    .catch(() => showToast('⚠️ Failed to copy'));
+  const jb = document.getElementById('jbox'); if(!jb) return;
+  navigator.clipboard.writeText(jb.textContent)
+    .then(() => { showToast('success','JSON copied to clipboard'); const b = document.querySelector('.copy-btn'); if(b){b.innerHTML='<i class="fa-solid fa-check"></i> Copied!'; setTimeout(()=>b.innerHTML='<i class="fa-regular fa-copy"></i> Copy JSON',2000);} })
+    .catch(() => showToast('error','Copy failed'));
 }
 
-/* ═══════════════════════════════════════════════════
-   MAIN PIPELINE RUNNER
-═══════════════════════════════════════════════════ */
+/* ── Main runner ── */
 async function runPipeline() {
   const file = document.getElementById('resumeFile').files[0];
-  const jT = document.getElementById('jobTitle').value.trim();
-  const jR = document.getElementById('jobRole').value.trim();
-  const jD = document.getElementById('jobDesc').value.trim();
-  const opp = document.getElementById('oppType').value;
+  const jT   = document.getElementById('jobTitle').value.trim();
+  const jR   = document.getElementById('jobRole').value.trim();
+  const jD   = document.getElementById('jobDesc').value.trim();
+  const opp  = document.getElementById('oppType').value;
 
-  if(!file) { showToast('⚠️ Upload a resume file'); return; }
-  if(!jT) { showToast('⚠️ Enter a title'); document.getElementById('jobTitle').focus(); return; }
-  if(!jR) { showToast('⚠️ Enter a role'); document.getElementById('jobRole').focus(); return; }
-  if(!jD) { showToast('⚠️ Enter a description'); document.getElementById('jobDesc').focus(); return; }
+  if(!file) { showToast('warning','Upload a resume file first'); return; }
+  if(!jT)   { showToast('warning','Enter a job title');    document.getElementById('jobTitle').focus(); return; }
+  if(!jR)   { showToast('warning','Enter a job role');     document.getElementById('jobRole').focus();  return; }
+  if(!jD)   { showToast('warning','Enter a job description'); document.getElementById('jobDesc').focus(); return; }
   if(!validateFile(file)) return;
 
-  setLoading(true);
-  resetPipeline();
-  document.getElementById('resultsArea').innerHTML = '<div class="empty-state"><div class="empty-icon">⚙️</div><div class="empty-text">AI agents analyzing resume…<br/>This may take 30-60 seconds</div></div>';
-  document.getElementById('rightEmpty').style.display = 'flex';
+  setLoading(true); resetSteps();
+  document.getElementById('resultsArea').innerHTML = `
+    <div class="empty-state">
+      <div class="empty-icon-wrap">
+        <div class="empty-icon-inner"><i class="fa-solid fa-microchip" style="animation:spin .8s linear infinite"></i></div>
+      </div>
+      <div class="empty-heading">Analyzing resume…</div>
+      <div class="empty-sub">8 AI agents are processing your resume. This usually takes 30–60 seconds.</div>
+    </div>`;
+  document.getElementById('rightEmpty').style.display  = 'flex';
   document.getElementById('rightContent').style.display = 'none';
 
-  simulatePipeline(45000);
+  simulateSteps(50000);
 
   const form = new FormData();
-  form.append('resume', file);
-  form.append('job_title', jT);
-  form.append('job_role', jR);
-  form.append('job_description', jD);
-  form.append('opportunity_type', opp);
-  form.append('skills_required', document.getElementById('skills').value || '');
-  form.append('years_experience_required', opp === 'internship' ? '0' : (document.getElementById('yearsExp').value || '0'));
-  form.append('education_required', document.getElementById('eduReq').value || '');
+  form.append('resume',                    file);
+  form.append('job_title',                 jT);
+  form.append('job_role',                  jR);
+  form.append('job_description',           jD);
+  form.append('opportunity_type',          opp);
+  form.append('skills_required',           document.getElementById('skills').value || '');
+  form.append('years_experience_required', opp==='internship'?'0':(document.getElementById('yearsExp').value||'0'));
+  form.append('education_required',        document.getElementById('eduReq').value || '');
 
-  const startTime = Date.now();
+  const start = Date.now();
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 120000);
-    const res = await fetch('/api/score-resume', { method:'POST', body:form, signal: controller.signal });
-    clearTimeout(timeoutId);
+    const tid = setTimeout(() => controller.abort(), 120000);
+    const res  = await fetch('/api/score-resume', { method:'POST', body:form, signal:controller.signal });
+    clearTimeout(tid);
     const data = await res.json();
-
     if(!res.ok) {
-      completePipeline(false);
-      document.getElementById('resultsArea').innerHTML = `<div class="err-bar">⚠️ ${data.detail||JSON.stringify(data)}</div>`;
-      showToast('❌ Analysis failed');
-      return;
+      completeSteps(false);
+      document.getElementById('resultsArea').innerHTML = `<div class="err-bar"><i class="fa-solid fa-triangle-exclamation"></i><div>${data.detail||JSON.stringify(data)}</div></div>`;
+      showToast('error','Analysis failed'); return;
     }
-
-    completePipeline(true);
-    const elapsed = ((Date.now() - startTime)/1000).toFixed(1);
-    const fs = data.final_score;
-    setLog(`✅ Score: ${fs?.total_score?.toFixed(1)||'?'}/100 — ${fs?.breakdown?.label||''} · ${elapsed}s`, 'green');
-    renderResults(data);
-    renderRightPanel(data);
-    showToast('✅ Analysis complete!');
-
+    const elapsed = ((Date.now() - start)/1000).toFixed(1);
+    completeSteps(true);
+    setStatusBar('done', `Score: ${(data.final_score?.total_score||0).toFixed(1)}/100 — ${data.final_score?.breakdown?.label||''}`, `${elapsed}s`);
+    renderResults(data); renderRight(data);
+    showToast('success','Analysis complete');
   } catch(err) {
-    completePipeline(false);
+    completeSteps(false);
     if(err.name === 'AbortError') {
-      document.getElementById('resultsArea').innerHTML = '<div class="err-bar">⚠️ Request timed out (2 min)</div>';
-      showToast('⏰ Timed out');
+      document.getElementById('resultsArea').innerHTML = `<div class="err-bar"><i class="fa-solid fa-clock"></i><div>Request timed out (2 minutes). Try again.</div></div>`;
+      showToast('error','Request timed out');
     } else {
-      document.getElementById('resultsArea').innerHTML = `<div class="err-bar">⚠️ Cannot connect to server on port 8000.<br/>${err.message}</div>`;
-      showToast('❌ Connection failed');
+      document.getElementById('resultsArea').innerHTML = `<div class="err-bar"><i class="fa-solid fa-triangle-exclamation"></i><div>Cannot connect to server. Ensure the backend is running on port 8000.<br/><span style="font-size:.62rem;opacity:.7">${err.message}</span></div></div>`;
+      showToast('error','Connection failed');
     }
-  } finally {
-    setLoading(false);
-  }
+  } finally { setLoading(false); }
 }
 
-document.addEventListener('keydown', (e) => {
-  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-    e.preventDefault();
-    runPipeline();
-  }
-});
+document.addEventListener('keydown', e => { if((e.ctrlKey||e.metaKey) && e.key==='Enter') { e.preventDefault(); runPipeline(); } });
 </script>
 </body>
 </html>

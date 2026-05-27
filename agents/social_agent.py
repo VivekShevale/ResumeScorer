@@ -10,21 +10,23 @@ Fetches live data from 3 public APIs (no auth needed for basic data):
 
 Scoring strategy per platform:
 
-  GitHub (weight: 35%)
-    Signals: public_repos, total_stars, followers, contributions_last_year
+  GitHub (weight: 35%) — RELAXED THRESHOLDS
+    Signals: public_repos, total_stars, followers
     Score formula:
-      repos_score    = clamp(repos / 20, 0, 1) * 10
-      stars_score    = clamp(stars / 50, 0, 1) * 10
-      followers_score= clamp(followers / 100, 0, 1) * 10
-      final = 0.40*repos + 0.35*stars + 0.25*followers
+      repos_score    = clamp(repos / 10, 0, 1) * 10     (10 repos = full score)
+      stars_score    = clamp(stars / 20, 0, 1) * 10     (20 stars = full score)
+      followers_score= clamp(followers / 30, 0, 1) * 10 (30 followers = full score)
+      final = 0.50*repos + 0.30*stars + 0.20*followers
+      floor = 3.0 if any repos exist
 
-  LeetCode (weight: 35%)
+  LeetCode (weight: 35%) — RELAXED THRESHOLDS
     Signals: total_solved, ranking, easy/medium/hard breakdown
     Score formula:
-      solved_score  = clamp(total_solved / 300, 0, 1) * 10
-      hard_bonus    = clamp(hard_solved / 50, 0, 1) * 2   (bonus)
-      rank_score    = clamp(1 - ranking/500000, 0, 1) * 10
-      final = 0.50*solved + 0.30*rank + 0.20*hard_bonus
+      solved_score  = clamp(total_solved / 100, 0, 1) * 10  (100 solved = full)
+      hard_score    = clamp(hard_solved / 20, 0, 1) * 10    (20 hard = full)
+      rank_score    = clamp(1 - ranking/200000, 0, 1) * 10  (rank < 200k = good)
+      final = 0.50*solved + 0.30*rank + 0.20*hard
+      floor = 3.0 if any problems solved
 
   Codeforces (weight: 30%)
     Signals: rating, max_rating, rank title
@@ -130,11 +132,15 @@ def _fetch_github(username: str) -> Tuple[Optional[dict], float]:
                 "profile_url":  user.get("html_url"),
             }
 
-            # Score
-            repos_s    = clamp_score(min(data["public_repos"] / 20, 1.0) * 10)
-            stars_s    = clamp_score(min(total_stars / 50, 1.0) * 10)
-            followers_s= clamp_score(min(data["followers"] / 100, 1.0) * 10)
-            score      = clamp_score(0.40 * repos_s + 0.35 * stars_s + 0.25 * followers_s)
+            # Score — relaxed thresholds so good candidates aren't penalised
+            # 10 repos = max repos score; 20 stars = max stars; 30 followers = max
+            repos_s    = clamp_score(min(data["public_repos"] / 10, 1.0) * 10)
+            stars_s    = clamp_score(min(total_stars / 20, 1.0) * 10)
+            followers_s= clamp_score(min(data["followers"] / 30, 1.0) * 10)
+            score      = clamp_score(0.50 * repos_s + 0.30 * stars_s + 0.20 * followers_s)
+            # Floor: any profile with repos gets minimum 3.0
+            if data["public_repos"] > 0:
+                score = max(score, 3.0)
 
             data["score_breakdown"] = {
                 "repos_score":     round(repos_s, 2),
@@ -221,11 +227,15 @@ def _fetch_leetcode(username: str) -> Tuple[Optional[dict], float]:
                 "profile_url":   f"https://leetcode.com/{username}",
             }
 
-            # Score
-            solved_s = clamp_score(min(total_solved / 300, 1.0) * 10)
-            hard_s   = clamp_score(min(hard_solved / 50, 1.0) * 10)
-            rank_s   = clamp_score(max(0, 1 - ranking / 500_000) * 10)
+            # Score — relaxed thresholds
+            # 100 solved = good (was 300); 20 hard = good (was 50); rank 200k = good (was 500k)
+            solved_s = clamp_score(min(total_solved / 100, 1.0) * 10)
+            hard_s   = clamp_score(min(hard_solved / 20, 1.0) * 10)
+            rank_s   = clamp_score(max(0, 1 - ranking / 200_000) * 10)
             score    = clamp_score(0.50 * solved_s + 0.30 * rank_s + 0.20 * hard_s)
+            # Floor: any profile with solved problems gets minimum 3.0
+            if total_solved > 0:
+                score = max(score, 3.0)
 
             data["score_breakdown"] = {
                 "solved_score": round(solved_s, 2),

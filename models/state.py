@@ -36,6 +36,8 @@ class ExperienceItem(BaseModel):
     end_date: Optional[str] = None
     description: Optional[str] = None
     is_current: bool = False
+    # Pre-computed by resume_parser_agent (batched LLM call) — no extra LLM needed downstream
+    company_tier: int = 3  # 1=FAANG, 2=mid, 3=small
 
 
 class EducationItem(BaseModel):
@@ -44,13 +46,15 @@ class EducationItem(BaseModel):
     field: Optional[str] = None
     graduation_date: Optional[str] = None
     gpa: Optional[str] = None
+    # Pre-computed by resume_parser_agent (batched LLM call) — no extra LLM needed downstream
+    institution_tier: int = 2  # 1=IIT/top-global, 2=good-college, 3=unknown
 
 
 class ProjectItem(BaseModel):
     name: Optional[str] = None
     type: Optional[str] = None
     description: Optional[str] = None
-    technologies: Optional[List[str]] = []
+    technologies: Optional[List[str]] = Field(default_factory=list)
 
 
 class AchievementItem(BaseModel):
@@ -68,7 +72,9 @@ class ParsedResume(BaseModel):
     projects: List[ProjectItem] = Field(default_factory=list)
     achievements: List[AchievementItem] = Field(default_factory=list)
     certifications: List[str] = Field(default_factory=list)
-    raw_text: Optional[str] = None  # original extracted text
+    raw_text: Optional[str] = None
+    # Pre-computed by resume_parser_agent — overall achievement quality 0-10
+    achievement_quality_score: Optional[float] = None
 
     @field_validator("skills", mode="before")
     @classmethod
@@ -89,6 +95,7 @@ class JobInput(BaseModel):
     education_required: Optional[str] = None
     years_experience_required: Optional[float] = None
     skills_required: List[str] = Field(default_factory=list)
+    opportunity_type: Optional[str] = "job"  # "job" or "internship"
 
     @field_validator("skills_required", mode="before")
     @classmethod
@@ -137,6 +144,16 @@ class SocialScore(BaseModel):
     reasoning: Optional[str] = None
 
 
+class ProjectScore(BaseModel):
+    score: float = Field(ge=0, le=10)
+    project_count: int = 0
+    quality_score: float = 0.0
+    tech_match_score: float = 0.0
+    skills_used_in_projects: List[str] = Field(default_factory=list)
+    required_skills_missing_from_projects: List[str] = Field(default_factory=list)
+    reasoning: Optional[str] = None
+
+
 class SemanticScore(BaseModel):
     score: float = Field(ge=0, le=10)
     reasoning: Optional[str] = None
@@ -149,6 +166,7 @@ class FinalScore(BaseModel):
     education_score: Optional[EducationScore] = None
     achievement_score: Optional[AchievementScore] = None
     social_score: Optional[SocialScore] = None
+    project_score: Optional[ProjectScore] = None
     semantic_score: Optional[SemanticScore] = None
     breakdown: Optional[dict] = None
 
@@ -164,7 +182,7 @@ class ResumeGraphState(TypedDict, total=False):
 
     # ── Agent 1 output ──────────────────────
     raw_text: str                  # extracted text from resume
-    parsed_resume: dict            # ParsedResume as dict
+    parsed_resume: dict            # ParsedResume as dict (includes pre-computed tiers)
 
     # ── Agent 2 output ──────────────────────
     skill_score: dict
@@ -181,7 +199,10 @@ class ResumeGraphState(TypedDict, total=False):
     # ── Agent 6 output ──────────────────────
     social_score: dict
 
-    # ── Agent 7 output ──────────────────────
+    # ── Agent 7 output (NEW) ────────────────
+    project_score: dict
+
+    # ── Agent 8 output (was Agent 7) ────────
     semantic_score: dict
     final_score: dict
 

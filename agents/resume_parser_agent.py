@@ -1,10 +1,16 @@
 """
 agents/resume_parser_agent.py
 ------------------------------
-Agent 1: Resume Parser
+Agent 1: Resume Parser (OPTIMISED — single LLM call)
 
 Pipeline:
-  file_path → extract_text() → LLM (Groq) → validated ParsedResume JSON
+  file_path → extract_text() → ONE LLM call (Groq) → validated ParsedResume JSON
+                                                     + pre-computed tier data for downstream agents
+
+Key optimisation:
+  Instead of calling LLM separately in education/experience/achievement agents for tier
+  classification, we batch everything into ONE single LLM call here. The parsed state
+  carries pre-computed tiers so downstream agents are purely math-based (no LLM).
 
 Anti-hallucination measures:
   - Strict JSON-only system prompt
@@ -17,7 +23,6 @@ Anti-hallucination measures:
 from __future__ import annotations
 import os
 import re
-import json
 from dotenv import load_dotenv
 
 from langchain_groq import ChatGroq
@@ -44,14 +49,14 @@ def _get_llm() -> ChatGroq:
     return ChatGroq(
         api_key=api_key,
         model=model,
-        temperature=0,       # deterministic — reduces hallucination
-        max_tokens=4096,
+        temperature=0,
+        max_tokens=6000,
     )
 
 
 # ─── System prompt ───────────────────────────────────────────────────────────
 
-SYSTEM_PROMPT = """You are a precise resume parser. Your ONLY job is to extract information from resume text and return it as valid JSON.
+SYSTEM_PROMPT = """You are a precise resume parser and classifier. Your ONLY job is to extract information from resume text and return it as valid JSON.
 
 STRICT RULES:
 1. Output ONLY valid JSON — no explanation, no markdown, no preamble.
@@ -62,14 +67,39 @@ STRICT RULES:
 6. Skills must be exact technologies/tools/languages mentioned in the resume.
 
 IMPORTANT — SOCIAL PROFILE EXTRACTION:
-- At the end of the resume text you may see a section "[EXTRACTED_LINKS]" — these are hyperlinks 
+- At the end of the resume text you may see a section "[EXTRACTED_LINKS]" — these are hyperlinks
   extracted from the PDF. Use them to fill github, linkedin, leetcode, codeforces, codechef, website fields.
-- Also look for patterns like "@VivekShevale" (GitHub handle) or "/ShevaleVivek" (LinkedIn handle) 
+- Also look for patterns like "@VivekShevale" (GitHub handle) or "/ShevaleVivek" (LinkedIn handle)
   in the header/contact section — infer full URLs from these patterns.
 - For GitHub: "@username" near top of resume → "https://github.com/username"
 - For LinkedIn: "/username" or "linkedin.com/in/username" → full LinkedIn URL
 - For LeetCode: text like "vvkshvl – LeetCode Profile" or "leetcode.com/u/username" → full URL
 - Always prefer explicit URLs from [EXTRACTED_LINKS] over inferred ones.
+
+TIER CLASSIFICATION RULES (classify as part of this single call):
+
+institution_tier — classify the educational institution:
+  1 = IITs, IISc, NITs (top), BITS Pilani, top global unis (MIT, Stanford, CMU, Oxford, Cambridge, etc.)
+  2 = Good private engineering colleges, IIIT branches, VIT, Manipal, SRM, NMIMS, LJ University,
+      Nirma University, DAIICT, PDEU, CHARUSAT, Silver Oak, Parul University, known state universities,
+      NAAC A/A+ colleges, any "Institute of Technology" or "Engineering" named college
+  3 = Unknown/local colleges, unaccredited institutions, high schools/12th standard schools
+  DEFAULT: When uncertain about an Indian engineering college → Tier 2
+
+company_tier — classify each employer:
+  1 = FAANG, Top MNCs (Google, Microsoft, Amazon, Meta, Apple, Netflix, Uber, Airbnb, etc.)
+  2 = Well-known tech (Razorpay, Zepto, Zomato, Swiggy, Flipkart, Paytm, Freshworks, Postman, etc.)
+      or funded startups with 500+ employees
+  3 = Small companies, local businesses, unknown startups, agencies, freelance
+  DEFAULT: When uncertain about a tech company → Tier 2; otherwise → Tier 3
+
+achievement_quality_score — rate the OVERALL achievements + certifications quality from 0.0 to 10.0:
+  9-10 = World-class (ICPC world finalist, IOI medalist, Codeforces rating 2300+)
+  7-8  = Excellent (ICPC regional, hackathon win, AWS/GCP/Azure cert, Codeforces Expert+)
+  5-6  = Good (LeetCode top 5-10%, recognized hackathon participant, Google/Meta cert)
+  3-4  = Average (LeetCode moderate activity, basic online certs)
+  1-2  = Low (minimal/no notable achievements)
+  0    = No achievements/certifications at all
 
 Return this exact JSON structure:
 {
@@ -95,7 +125,8 @@ Return this exact JSON structure:
       "start_date": null,
       "end_date": null,
       "description": null,
-      "is_current": false
+      "is_current": false,
+      "company_tier": 3
     }
   ],
   "education": [
@@ -104,7 +135,8 @@ Return this exact JSON structure:
       "degree": null,
       "field": null,
       "graduation_date": null,
-      "gpa": null
+      "gpa": null,
+      "institution_tier": 2
     }
   ],
   "projects": [
@@ -122,7 +154,8 @@ Return this exact JSON structure:
       "platform": null
     }
   ],
-  "certifications": []
+  "certifications": [],
+  "achievement_quality_score": 0.0
 }"""
 
 
@@ -139,11 +172,9 @@ def _regex_extract_phone(text: str) -> str | None:
 
 
 def _regex_extract_linkedin(text: str) -> str | None:
-    # Full URL
     match = re.search(r"linkedin\.com/in/[\w\-]+", text, re.IGNORECASE)
     if match:
         return f"https://{match.group()}"
-    # /username pattern at start of line (common in modern resume templates)
     match = re.search(r"(?:^|[\s|])/([a-zA-Z][a-zA-Z0-9\-_]{2,})", text, re.MULTILINE)
     if match:
         return f"https://linkedin.com/in/{match.group(1)}"
@@ -151,20 +182,15 @@ def _regex_extract_linkedin(text: str) -> str | None:
 
 
 def _regex_extract_github(text: str) -> str | None:
-    # Full URL — most reliable
     match = re.search(r"github\.com/([a-zA-Z0-9][a-zA-Z0-9\-]{1,38})(?:[/\s]|$)", text, re.IGNORECASE)
     if match:
         return f"https://github.com/{match.group(1)}"
-    # @username pattern — ONLY if it appears near GitHub context words
-    # and is NOT part of an email address (no dot-domain after it)
     match = re.search(
         r"(?:github|git)[^\n]{0,30}@([a-zA-Z][a-zA-Z0-9\-_]{2,38})(?!\.[a-zA-Z])",
         text, re.IGNORECASE
     )
     if match:
         return f"https://github.com/{match.group(1)}"
-    # Standalone @username only if it appears on a line by itself or near social context
-    # Strictly exclude if the @ is inside an email (has chars before @ with no space)
     match = re.search(
         r"(?:^|[\s|])@([a-zA-Z][a-zA-Z0-9\-_]{2,38})(?!\.[a-zA-Z])(?=\s|$|[|/])",
         text, re.MULTILINE
@@ -175,12 +201,10 @@ def _regex_extract_github(text: str) -> str | None:
 
 
 def _regex_extract_leetcode(text: str) -> str | None:
-    # Full URL forms
     match = re.search(r"leetcode\.com/(?:u/)?[\w\-]+", text, re.IGNORECASE)
     if match:
         return f"https://{match.group()}"
-    # "username – LeetCode Profile" or "(username – LeetCode" patterns
-    match = re.search(r"\(?([\w\-]+)\s*[–\-]\s*LeetCode", text, re.IGNORECASE)
+    match = re.search(r"\(?(['\w\-]+)\s*[--]\s*LeetCode", text, re.IGNORECASE)
     if match:
         return f"https://leetcode.com/u/{match.group(1)}"
     return None
@@ -196,18 +220,15 @@ def _regex_extract_codeforces(text: str) -> str | None:
 def _validate_and_fix(parsed_dict: dict, raw_text: str) -> ParsedResume:
     """
     Takes raw LLM JSON dict → validates with Pydantic → fixes using regex fallbacks.
-    This ensures we never silently accept hallucinated or missing values.
+    Preserves tier data from the batched LLM call for zero downstream LLM calls.
     """
     pi = parsed_dict.get("personal_info") or {}
 
-    # Regex fallbacks for critical contact fields
     email = validate_email(pi.get("email") or "") or _regex_extract_email(raw_text)
     phone = pi.get("phone") or _regex_extract_phone(raw_text)
     linkedin = validate_url(pi.get("linkedin") or "") or _regex_extract_linkedin(raw_text)
 
-    # GitHub: validate it's not an email domain (e.g. github.com/gmail from @gmail.com)
     github_raw = validate_url(pi.get("github") or "") or _regex_extract_github(raw_text)
-    # Reject obviously wrong GitHub URLs derived from email domains
     email_domain = email.split("@")[-1].split(".")[0].lower() if email and "@" in email else ""
     if github_raw and email_domain and github_raw.rstrip("/").lower().endswith(f"/{email_domain}"):
         logger.warning(f"[ResumeParser] Rejected likely fake GitHub URL '{github_raw}' (matches email domain)")
@@ -231,15 +252,16 @@ def _validate_and_fix(parsed_dict: dict, raw_text: str) -> ParsedResume:
         profession=sanitize_string(pi.get("profession"), 100),
     )
 
-    # Skills: deduplicate and sanitize
     raw_skills = sanitize_list(parsed_dict.get("skills"), 100)
     skills = list(dict.fromkeys(s for s in raw_skills if len(s) > 1))
 
-    # Experience
     experience = []
     for exp in (parsed_dict.get("experience") or []):
         if not isinstance(exp, dict):
             continue
+        tier = exp.get("company_tier", 3)
+        if tier not in (1, 2, 3):
+            tier = 3
         experience.append(ExperienceItem(
             company=sanitize_string(exp.get("company"), 200),
             position=sanitize_string(exp.get("position"), 200),
@@ -247,22 +269,25 @@ def _validate_and_fix(parsed_dict: dict, raw_text: str) -> ParsedResume:
             end_date=sanitize_string(exp.get("end_date"), 20),
             description=sanitize_string(exp.get("description"), 1000),
             is_current=bool(exp.get("is_current", False)),
+            company_tier=int(tier),
         ))
 
-    # Education
     education = []
     for edu in (parsed_dict.get("education") or []):
         if not isinstance(edu, dict):
             continue
+        tier = edu.get("institution_tier", 2)
+        if tier not in (1, 2, 3):
+            tier = 2
         education.append(EducationItem(
             institution=sanitize_string(edu.get("institution"), 200),
             degree=sanitize_string(edu.get("degree"), 100),
             field=sanitize_string(edu.get("field"), 100),
             graduation_date=sanitize_string(edu.get("graduation_date"), 20),
             gpa=sanitize_string(edu.get("gpa"), 10),
+            institution_tier=int(tier),
         ))
 
-    # Projects
     projects = []
     for proj in (parsed_dict.get("projects") or []):
         if not isinstance(proj, dict):
@@ -274,7 +299,6 @@ def _validate_and_fix(parsed_dict: dict, raw_text: str) -> ParsedResume:
             technologies=sanitize_list(proj.get("technologies"), 30),
         ))
 
-    # Achievements
     achievements = []
     for ach in (parsed_dict.get("achievements") or []):
         if not isinstance(ach, dict):
@@ -285,8 +309,16 @@ def _validate_and_fix(parsed_dict: dict, raw_text: str) -> ParsedResume:
             platform=sanitize_string(ach.get("platform"), 100),
         ))
 
-    # Certifications
     certifications = sanitize_list(parsed_dict.get("certifications"), 30)
+
+    # Extract pre-computed achievement quality score from batched call
+    ach_quality = parsed_dict.get("achievement_quality_score")
+    try:
+        ach_quality = float(ach_quality) if ach_quality is not None else None
+        if ach_quality is not None:
+            ach_quality = max(0.0, min(10.0, ach_quality))
+    except (TypeError, ValueError):
+        ach_quality = None
 
     return ParsedResume(
         personal_info=personal_info,
@@ -298,6 +330,7 @@ def _validate_and_fix(parsed_dict: dict, raw_text: str) -> ParsedResume:
         achievements=achievements,
         certifications=certifications,
         raw_text=raw_text,
+        achievement_quality_score=ach_quality,
     )
 
 
@@ -305,10 +338,16 @@ def _validate_and_fix(parsed_dict: dict, raw_text: str) -> ParsedResume:
 
 def resume_parser_agent(state: ResumeGraphState) -> ResumeGraphState:
     """
-    LangGraph node: Agent 1 — Resume Parser
+    LangGraph node: Agent 1 — Resume Parser (single batched LLM call)
 
     Input state keys:  resume_file_path
     Output state keys: raw_text, parsed_resume, errors
+
+    Optimisation: one LLM call extracts resume fields AND pre-computes:
+      - institution_tier per education entry
+      - company_tier per experience entry
+      - achievement_quality_score (overall 0-10)
+    Downstream agents (education, experience, achievement) use these directly — zero extra LLM calls.
     """
     agent_name = "ResumeParserAgent"
     log_agent_start(logger, agent_name, {"resume_file_path": state.get("resume_file_path", "")})
@@ -333,14 +372,14 @@ def resume_parser_agent(state: ResumeGraphState) -> ResumeGraphState:
 
     logger.info(f"[{agent_name}] Text extracted | length={len(raw_text)} chars")
 
-    # ── Step 2: Call LLM to parse resume ──
+    # ── Step 2: Single batched LLM call (parse + classify all tiers at once) ──
     try:
         llm = _get_llm()
         messages = [
             SystemMessage(content=SYSTEM_PROMPT),
-            HumanMessage(content=f"Parse this resume:\n\n{raw_text[:12000]}")  # 12k char limit
+            HumanMessage(content=f"Parse this resume and classify all tiers and achievement quality:\n\n{raw_text[:12000]}")
         ]
-        logger.info(f"[{agent_name}] Calling Groq LLM...")
+        logger.info(f"[{agent_name}] Calling Groq LLM (single batched call — parse + tier classification)...")
         response = llm.invoke(messages)
         llm_output = response.content
         logger.debug(f"[{agent_name}] LLM raw output preview: {llm_output[:300]!r}")
@@ -357,7 +396,6 @@ def resume_parser_agent(state: ResumeGraphState) -> ResumeGraphState:
         msg = f"LLM returned invalid JSON. Output: {llm_output[:500]}"
         log_agent_error(logger, agent_name, msg)
         errors.append(msg)
-        # Still try regex extraction as fallback
         parsed_dict = {}
 
     # ── Step 4: Validate, sanitize, fix ──
@@ -373,8 +411,10 @@ def resume_parser_agent(state: ResumeGraphState) -> ResumeGraphState:
         logger, agent_name,
         f"name={parsed_resume.personal_info.full_name!r} | "
         f"skills={len(parsed_resume.skills)} | "
-        f"experience={len(parsed_resume.experience)} | "
-        f"education={len(parsed_resume.education)}"
+        f"exp={len(parsed_resume.experience)} | "
+        f"edu={len(parsed_resume.education)} | "
+        f"projects={len(parsed_resume.projects)} | "
+        f"ach_quality_score={parsed_resume.achievement_quality_score}"
     )
 
     return {

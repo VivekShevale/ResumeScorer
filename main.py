@@ -1,5 +1,5 @@
 """
-main.py — v1.1.0: All 7 agents + Job/Internship mode
+main.py — v2.0.0: All 8 agents + Job/Internship mode
 """
 from __future__ import annotations
 import os, uuid, shutil
@@ -14,7 +14,7 @@ from graph.pipeline import run_pipeline
 from utils.logger import get_logger
 logger = get_logger("main")
 
-app = FastAPI(title="Resume Scorer API", version="1.1.0")
+app = FastAPI(title="Resume Scorer API", version="2.0.0")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 UPLOAD_DIR    = Path("uploads"); UPLOAD_DIR.mkdir(exist_ok=True)
 FRONTEND_PATH = Path("frontend/index.html")
@@ -83,6 +83,7 @@ async def score_resume(
         "education_score":  result.get("education_score"),
         "achievement_score":result.get("achievement_score"),
         "social_score":     result.get("social_score"),
+        "project_score":    result.get("project_score"),
         "semantic_score":   result.get("semantic_score"),
         "final_score":      result.get("final_score"),
         "opportunity_type": opp_type,
@@ -116,13 +117,13 @@ async def _compat(
 @app.get("/api/health")
 async def health():
     return {
-        "status": "ok", "version": "1.1.0",
-        "agents": 7, "modes": ["job", "internship"],
+        "status": "ok", "version": "2.0.0",
+        "agents": 8, "modes": ["job", "internship"],
         "groq_key_set": bool(os.getenv("GROQ_API_KEY")),
     }
 
 
 if __name__ == "__main__":
     import uvicorn
-    logger.info("🚀 Resume Scorer v1.1.0 — Job & Internship modes active")
+    logger.info("🚀 Resume Scorer v2.0.0 — Job & Internship modes active")
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)

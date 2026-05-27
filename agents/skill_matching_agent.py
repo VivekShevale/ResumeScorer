@@ -202,18 +202,48 @@ def _llm_semantic_match(unmatched_resume: List[str], missing_required: List[str]
 
 # ─── Score calculation ────────────────────────────────────────────────────────
 
-def _calculate_score(total_required: int, exact_matched: int, semantic_matched: int, cosine: float) -> float:
+def _calculate_score(
+    total_required: int,
+    exact_matched: int,
+    semantic_matched: int,
+    cosine: float,
+    total_resume_skills: int = 0,
+) -> float:
     """
-    Weighted: 50% exact, 30% cosine, 20% semantic bonus.
-    All normalized to [0, 10].
+    Scoring rules:
+      - All required skills matched → minimum 9.0
+      - All required matched + extra relevant resume skills → up to 10.0
+      - Partial match → weighted formula (50% exact, 30% cosine, 20% semantic)
+
+    Guarantees:
+      full match (all required covered)       → score >= 9.0
+      full match + more relevant extras       → score up to 10.0
+      partial match                           → proportional 0–8.9
     """
     if total_required == 0:
         return clamp_score(5.0 + cosine * 5.0)
 
-    base           = exact_matched    / total_required
+    total_matched = exact_matched + semantic_matched
+    match_ratio = total_matched / total_required  # 0.0 – 1.0+ (can exceed 1.0 if semantic overlaps)
+    match_ratio = min(match_ratio, 1.0)
+
+    # ── Full match path ──
+    if total_matched >= total_required:
+        base_score = 9.0
+        # Bonus for extra skills beyond required (up to +1.0 → score 10.0)
+        extra_skills = max(0, total_resume_skills - total_required)
+        extra_bonus = min(extra_skills / max(total_required, 1) * 1.0, 1.0)
+        # Also reward cosine similarity (more similar = wider/deeper coverage)
+        cosine_bonus = cosine * 0.5
+        score = base_score + min(extra_bonus + cosine_bonus, 1.0)
+        return clamp_score(score)
+
+    # ── Partial match path ──
+    base           = exact_matched / total_required
     semantic_bonus = semantic_matched / total_required
     raw = (0.5 * base + 0.3 * cosine + 0.2 * semantic_bonus) * 10
-    return clamp_score(raw)
+    # Cap partial matches at 8.9 to maintain the 9.0 guarantee for full match
+    return clamp_score(min(raw, 8.9))
 
 
 # ─── Main agent function ──────────────────────────────────────────────────────
@@ -221,6 +251,16 @@ def _calculate_score(total_required: int, exact_matched: int, semantic_matched: 
 def skill_matching_agent(state: ResumeGraphState) -> ResumeGraphState:
     """
     LangGraph node: Agent 2 — Skill Matching
+
+    Scoring strategy (3 layers):
+      Layer 1 — Exact/normalized keyword match (no LLM)
+      Layer 2 — TF-IDF cosine similarity (no LLM)
+      Layer 3 — LLM semantic expansion (ONLY for skills still unmatched after L1+L2)
+                → Already-matched skills are NOT sent to LLM, minimising token cost.
+
+    Score guarantees:
+      All required skills matched             → score >= 9.0
+      All required matched + extra relevant   → score up to 10.0
 
     Input state keys:  parsed_resume, job_input
     Output state keys: skill_score
@@ -235,8 +275,8 @@ def skill_matching_agent(state: ResumeGraphState) -> ResumeGraphState:
     parsed_resume  = state.get("parsed_resume") or {}
     job_input      = state.get("job_input")     or {}
 
-    resume_skills: List[str]   = parsed_resume.get("skills")          or []
-    required_skills: List[str] = job_input.get("skills_required")     or []
+    resume_skills: List[str]   = parsed_resume.get("skills")      or []
+    required_skills: List[str] = job_input.get("skills_required") or []
 
     logger.info(
         f"[{agent_name}] resume_skills={len(resume_skills)} | "
@@ -262,32 +302,47 @@ def skill_matching_agent(state: ResumeGraphState) -> ResumeGraphState:
         f"missing={len(missing_after_exact)} unmatched_resume={len(unmatched_resume)}"
     )
 
-    # ── Layer 2: Cosine similarity ──
+    # ── Layer 2: Cosine similarity (full skill sets) ──
     cosine = _cosine_skill_score(resume_skills, required_skills)
     logger.info(f"[{agent_name}] L2 cosine={cosine:.3f}")
 
-    # ── Layer 3: LLM Semantic match (only for still-missing skills) ──
+    # ── Layer 3: LLM Semantic match ──
+    # OPTIMISATION: Only pass UNMATCHED skills to LLM.
+    # Already-matched skills (exact_matched) are stripped from both sides.
+    # This minimises tokens and avoids redundant LLM work.
     semantic_matched = []
     if missing_after_exact and unmatched_resume:
+        logger.info(
+            f"[{agent_name}] L3 LLM semantic: "
+            f"sending {len(unmatched_resume)} unmatched resume skills vs "
+            f"{len(missing_after_exact)} still-missing required skills (matched skills excluded)"
+        )
         semantic_matched = _llm_semantic_match(unmatched_resume, missing_after_exact)
         logger.info(f"[{agent_name}] L3 semantic extra={len(semantic_matched)}")
+    else:
+        logger.info(f"[{agent_name}] L3 LLM skipped — no unmatched skills remaining")
 
     # ── Compute final missing after all layers ──
     semantic_norm = {_normalize(s) for s in semantic_matched}
     final_missing = [s for s in missing_after_exact if _normalize(s) not in semantic_norm]
 
-    # ── Score ──
+    # ── Score (with full-match guarantee) ──
     score = _calculate_score(
         total_required=len(required_skills),
         exact_matched=len(exact_matched),
         semantic_matched=len(semantic_matched),
         cosine=cosine,
+        total_resume_skills=len(resume_skills),
     )
 
+    total_matched = len(exact_matched) + len(semantic_matched)
+    full_match = total_matched >= len(required_skills)
     reasoning = (
         f"Resume skills: {len(resume_skills)} | Required: {len(required_skills)} | "
         f"Exact matches: {len(exact_matched)} | Semantic matches: {len(semantic_matched)} | "
-        f"Cosine similarity: {cosine:.2f} | Still missing: {len(final_missing)}"
+        f"Total matched: {total_matched} | Cosine similarity: {cosine:.2f} | "
+        f"Still missing: {len(final_missing)} | "
+        f"{'FULL MATCH → score guaranteed ≥9.0' if full_match else 'Partial match'}"
     )
 
     skill_score = SkillScore(
@@ -299,8 +354,8 @@ def skill_matching_agent(state: ResumeGraphState) -> ResumeGraphState:
 
     log_agent_end(
         logger, agent_name,
-        f"score={score:.2f}/10 | matched={len(exact_matched)+len(semantic_matched)} "
-        f"| missing={len(final_missing)} | cosine={cosine:.3f}"
+        f"score={score:.2f}/10 | matched={total_matched}/{len(required_skills)} "
+        f"| missing={len(final_missing)} | cosine={cosine:.3f} | full_match={full_match}"
     )
 
     return {
